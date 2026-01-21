@@ -1,0 +1,24 @@
+import * as ImagePicker from "expo-image-picker";
+import { Platform } from "react-native";
+
+export async function pickProfilePicture(): Promise<string | null> {
+  // På mobil må vi be om tilgang til bildebiblioteket
+  if (Platform.OS !== "web") {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      return null;
+    }
+  }
+
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    aspect: [1, 1], // kvadrat (profilbilde)
+    quality: 0.8,
+  });
+
+  if (result.canceled) return null;
+
+  const uri = result.assets?.[0]?.uri ?? null;
+  return uri;
+}
