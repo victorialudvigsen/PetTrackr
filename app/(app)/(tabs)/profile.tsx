@@ -1,3 +1,5 @@
+import { uploadProfilePictureToFirebase } from "@/api/imageApi";
+import { editUserAvatarUrl } from "@/api/userApi";
 import ProfilePicture from "@/components/ProfilePicture";
 import { useAuthSession } from "@/providers/authctx";
 import { pickProfilePicture } from "@/utils/pickProfilePicture";
@@ -11,6 +13,7 @@ export default function ProfilePage() {
   const { signOut, userNameSession, user } = useAuthSession();
 
   const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Midlertidig dummy-data for UI (bytter vi senere til ekte data)
   const displayName = userNameSession ?? "Ingen navn";
@@ -47,8 +50,32 @@ export default function ProfilePage() {
             <ProfilePicture
               imageUri={profileImageUri}
               onPressEdit={async () => {
+                if (!user?.uid) return;
+
                 const uri = await pickProfilePicture();
-                if (uri) setProfileImageUri(uri);
+                if (!uri) return;
+
+                // Vis bildet med en gang (lokal preview)
+                setProfileImageUri(uri);
+
+                try {
+                  setIsUploading(true);
+
+                  // 1) Upload til Storage -> får download URL tilbake
+                  const downloadUrl = await uploadProfilePictureToFirebase(
+                    uri,
+                    user.uid,
+                  );
+                  if (!downloadUrl) return;
+
+                  // 2) Lagre URL i Firestore (users/{uid})
+                  await editUserAvatarUrl(user.uid, downloadUrl);
+
+                  // 3) Bytt fra lokal uri til ekte URL (så det fungerer etter refresh også)
+                  setProfileImageUri(downloadUrl);
+                } finally {
+                  setIsUploading(false);
+                }
               }}
             />
 

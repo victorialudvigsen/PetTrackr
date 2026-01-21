@@ -54,3 +54,13 @@ export async function getUsersByIds(userIds: string[]) {
 
   return users;
 }
+
+// Lagrer profilbilde
+export async function editUserAvatarUrl(userId: string, avatarUrl: string) {
+  try {
+    await setDoc(doc(db, "users", userId), { avatarUrl }, { merge: true });
+    console.log("Avatar URL updated for user:", userId);
+  } catch (e) {
+    console.log("Error editing user avatarUrl", e);
+  }
+}

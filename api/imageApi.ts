@@ -1,5 +1,5 @@
 import { getStorageRef } from "@/firebaseConfig";
-import { uploadBytesResumable } from "firebase/storage";
+import { getDownloadURL, uploadBytesResumable } from "firebase/storage";
 
 export async function uploadImageToFirebase(uri: string) {
   const fetchResponse = await fetch(uri);
@@ -17,6 +17,32 @@ export async function uploadImageToFirebase(uri: string) {
     return uploadPath;
   } catch (e) {
     console.error("Error uploading image to firebase", e);
+    return null;
+  }
+}
+
+export async function uploadProfilePictureToFirebase(
+  uri: string,
+  userId: string,
+): Promise<string | null> {
+  const fetchResponse = await fetch(uri);
+  const blob = await fetchResponse.blob();
+
+  // Én fil per bruker (overskrives hver gang)
+  const uploadPath = `avatars/${userId}.jpg`;
+  const imageRef = await getStorageRef(uploadPath);
+
+  try {
+    console.log("Starting profile picture upload...");
+    await uploadBytesResumable(imageRef, blob);
+
+    // Hent URL som kan brukes i appen
+    const downloadUrl = await getDownloadURL(imageRef);
+
+    console.log("Profile picture uploaded. URL:", downloadUrl);
+    return downloadUrl;
+  } catch (e) {
+    console.error("Error uploading profile picture", e);
     return null;
   }
 }
