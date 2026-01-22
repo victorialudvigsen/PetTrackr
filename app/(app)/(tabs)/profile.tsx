@@ -1,12 +1,30 @@
+import {
+  updateUserDisplayName,
+  updateUserEmail,
+  updateUserPassword,
+} from "@/api/authApi";
 import { uploadProfilePictureToFirebase } from "@/api/imageApi";
-import { editUserAvatarUrl } from "@/api/userApi";
+import {
+  editUserAvatarUrl,
+  editUserPhone,
+  getUserProfile,
+} from "@/api/userApi";
 import ProfilePicture from "@/components/ProfilePicture";
 import { useAuthSession } from "@/providers/authctx";
 import { pickProfilePicture } from "@/utils/pickProfilePicture";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -14,17 +32,62 @@ export default function ProfilePage() {
 
   const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [phone, setPhone] = useState<string | null>(null);
 
   // Midlertidig dummy-data for UI (bytter vi senere til ekte data)
   const displayName = userNameSession ?? "Ingen navn";
   const email = user?.email ?? "Ingen e-post";
-  const phone = "+4745890940"; // placeholder (som i figma)
 
+  // Redigeringsstates
+  const [isEditingUserInfo, setIsEditingUserInfo] = useState(false);
+  const [isSavingUserInfo, setIsSavingUserInfo] = useState(false);
+
+  const [editName, setEditName] = useState(displayName);
+  const [editEmail, setEditEmail] = useState(email);
+  const [editPhone, setEditPhone] = useState(phone ?? "");
+  const [editPassword, setEditPassword] = useState("");
+  const [localDisplayName, setLocalDisplayName] = useState(displayName);
+
+  // Sjekker om brukeren faktisk har endret noe (for å disable Save)
+  const hasUserInfoChanges =
+    editName.trim() !== (localDisplayName ?? "").trim() ||
+    editEmail.trim() !== (email ?? "").trim() ||
+    editPhone.trim() !== (phone ?? "").trim() ||
+    editPassword.trim().length > 0; // passord teller kun hvis brukeren skrev noe
+
+  // My Pets dummy
   const pets = [
     { id: "1", name: "Lasse", type: "Dog" },
     { id: "2", name: "Scott", type: "Dog" },
   ];
 
+  // UseEffect
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const loadProfileImage = async () => {
+      const profile = await getUserProfile(user.uid);
+
+      if (profile?.avatarUrl) {
+        setProfileImageUri(profile.avatarUrl);
+      }
+
+      // Telefon er valgfri
+      if (profile?.phone) {
+        setPhone(profile.phone);
+      } else {
+        setPhone(null);
+      }
+    };
+
+    loadProfileImage();
+  }, [user?.uid]);
+
+  useEffect(() => {
+    setLocalDisplayName(displayName);
+  }, [displayName]);
+
+  //** JSX **/
   return (
     <View style={styles.screen}>
       {/* HEADER */}
@@ -49,6 +112,7 @@ export default function ProfilePage() {
           <View style={styles.profileRow}>
             <ProfilePicture
               imageUri={profileImageUri}
+              isLoading={isUploading}
               onPressEdit={async () => {
                 if (!user?.uid) return;
 
@@ -81,7 +145,7 @@ export default function ProfilePage() {
 
             <View style={styles.profileTextWrap}>
               <Text style={styles.profileName} numberOfLines={1}>
-                {displayName}
+                {localDisplayName}
               </Text>
               <Text style={styles.profileEmail} numberOfLines={1}>
                 {email}
@@ -95,43 +159,208 @@ export default function ProfilePage() {
           <View style={styles.cardHeaderRow}>
             <Text style={styles.cardTitle}>User Information</Text>
 
-            <Pressable onPress={() => {}}>
-              <Text style={styles.editLink}>Edit</Text>
-            </Pressable>
+            {/* Høyre side: Avbryt + Save/Edit */}
+            <View style={styles.headerActions}>
+              {/* Avbryt vises kun i edit-modus */}
+              {isEditingUserInfo && (
+                <Pressable
+                  disabled={isSavingUserInfo}
+                  style={{ opacity: isSavingUserInfo ? 0.6 : 1 }}
+                  onPress={() => {
+                    // Avbryt: forkast endringer og gå ut av edit-modus
+                    setEditName(localDisplayName);
+                    setEditEmail(email);
+                    setEditPhone(phone ?? "");
+                    setEditPassword(""); // alltid tomt av sikkerhet
+                    setIsEditingUserInfo(false);
+                  }}
+                >
+                  <Text style={styles.cancelLink}>Cancel</Text>
+                </Pressable>
+              )}
+
+              <Pressable
+                disabled={
+                  isSavingUserInfo || (isEditingUserInfo && !hasUserInfoChanges)
+                }
+                style={{
+                  opacity:
+                    isSavingUserInfo ||
+                    (isEditingUserInfo && !hasUserInfoChanges)
+                      ? 0.5
+                      : 1,
+                }}
+                onPress={async () => {
+                  // 1) Gå INN i edit-modus
+                  if (!isEditingUserInfo) {
+                    // Vi går INN i edit-modus: fyll feltene med dagens verdier
+                    setEditName(localDisplayName);
+                    setEditEmail(email);
+                    setEditPhone(phone ?? "");
+                    setEditPassword(""); // alltid tomt av sikkerhet
+                    setIsEditingUserInfo(true);
+                    return;
+                  }
+
+                  // 2) Vi er i edit-modus og trykker "Lagre"
+                  if (!user) return;
+
+                  setIsSavingUserInfo(true);
+
+                  try {
+                    // 1) Navn (Firebase Auth)
+                    const newName = editName.trim();
+                    if (newName && newName !== localDisplayName) {
+                      await updateUserDisplayName(user, newName);
+                      setLocalDisplayName(newName);
+                    }
+
+                    // 2) E-post (Firebase Auth)
+                    const newEmail = editEmail.trim();
+                    if (newEmail && newEmail !== email) {
+                      await updateUserEmail(user, newEmail);
+                    }
+
+                    // 3) Passord (Firebase Auth) - kun hvis brukeren skrev noe
+                    const newPassword = editPassword.trim();
+                    if (newPassword.length > 0) {
+                      await updateUserPassword(user, newPassword);
+                    }
+
+                    // 4) Telefon (Firestore) - valgfritt
+                    const newPhone =
+                      editPhone.trim().length > 0 ? editPhone.trim() : null;
+
+                    await editUserPhone(user.uid, newPhone);
+                    setPhone(newPhone);
+
+                    // Ferdig -> ut av edit-modus
+                    setIsEditingUserInfo(false);
+
+                    Alert.alert("Success", "Userinformation is updated.");
+                  } catch (e: any) {
+                    console.log("Lagre brukerinfo feilet:", e);
+
+                    const message =
+                      e?.code === "auth/requires-recent-login"
+                        ? "Av sikkerhetsgrunner må du logge inn på nytt før du kan endre e-post eller passord."
+                        : "Kunne ikke lagre endringene. Prøv igjen.";
+
+                    Alert.alert("Feil", message);
+                  } finally {
+                    setIsSavingUserInfo(false);
+                  }
+                }}
+              >
+                {isEditingUserInfo ? (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    {isSavingUserInfo && <ActivityIndicator size="small" />}
+                    <Text style={styles.editLink}>
+                      {isSavingUserInfo ? "Lagrer..." : "Save"}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={styles.editLink}>Edit</Text>
+                )}
+              </Pressable>
+            </View>
           </View>
 
           <View style={styles.divider} />
 
           {/* Rows */}
+          {/* Name */}
           <View style={styles.infoRow}>
             <View style={styles.infoIconWrap}>
               <Feather name="user" size={18} color="#111" />
             </View>
-            <Text style={styles.infoText} numberOfLines={1}>
-              {displayName}
-            </Text>
+
+            {isEditingUserInfo ? (
+              <TextInput
+                style={styles.input}
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="Name"
+              />
+            ) : (
+              <Text style={styles.infoText} numberOfLines={1}>
+                {localDisplayName}
+              </Text>
+            )}
           </View>
 
           <View style={styles.rowDivider} />
 
+          {/* Email */}
           <View style={styles.infoRow}>
             <View style={styles.infoIconWrap}>
               <Feather name="mail" size={18} color="#111" />
             </View>
-            <Text style={styles.infoText} numberOfLines={1}>
-              {email}
-            </Text>
+
+            {isEditingUserInfo ? (
+              <TextInput
+                style={styles.input}
+                value={editEmail}
+                onChangeText={setEditEmail}
+                placeholder="E-post"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            ) : (
+              <Text style={styles.infoText} numberOfLines={1}>
+                {email}
+              </Text>
+            )}
           </View>
+
+          {/* Password - kun i edit-modus */}
+          {isEditingUserInfo && (
+            <>
+              <View style={styles.rowDivider} />
+
+              <View style={styles.infoRow}>
+                <View style={styles.infoIconWrap}>
+                  <Feather name="lock" size={18} color="#111" />
+                </View>
+
+                <TextInput
+                  style={styles.input}
+                  value={editPassword}
+                  onChangeText={setEditPassword}
+                  placeholder="New password"
+                  secureTextEntry
+                />
+              </View>
+            </>
+          )}
 
           <View style={styles.rowDivider} />
 
+          {/* Phone */}
           <View style={styles.infoRow}>
             <View style={styles.infoIconWrap}>
               <Feather name="phone" size={18} color="#111" />
             </View>
-            <Text style={styles.infoText} numberOfLines={1}>
-              {phone}
-            </Text>
+
+            {isEditingUserInfo ? (
+              <TextInput
+                style={styles.input}
+                value={editPhone}
+                onChangeText={setEditPhone}
+                placeholder="Phone (optional)"
+                keyboardType="phone-pad"
+              />
+            ) : (
+              <Text style={styles.infoText} numberOfLines={1}>
+                {phone ?? "Not added"}
+              </Text>
+            )}
           </View>
         </View>
 
@@ -174,7 +403,7 @@ export default function ProfilePage() {
         {/* LOG OUT CARD */}
         <View style={styles.card}>
           <Pressable style={styles.logoutButton} onPress={signOut}>
-            <Text style={styles.logoutButtonText}>Logg ut</Text>
+            <Text style={styles.logoutButtonText}>Sign out</Text>
           </Pressable>
         </View>
 
@@ -357,5 +586,27 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "700",
     fontSize: 16,
+  },
+
+  input: {
+    flex: 1,
+    fontSize: 14,
+    color: "#111",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: "#E6E6E6",
+    borderRadius: 10,
+    backgroundColor: "#fff",
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  cancelLink: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "600",
   },
 });

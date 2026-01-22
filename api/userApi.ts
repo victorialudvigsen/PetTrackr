@@ -64,3 +64,13 @@ export async function editUserAvatarUrl(userId: string, avatarUrl: string) {
     console.log("Error editing user avatarUrl", e);
   }
 }
+
+// Lagrer telefonnummer (valgfritt)
+export async function editUserPhone(userId: string, phone: string | null) {
+  try {
+    await setDoc(doc(db, "users", userId), { phone }, { merge: true });
+    console.log("Phone updated for user:", userId);
+  } catch (e) {
+    console.log("Error editing user phone", e);
+  }
+}

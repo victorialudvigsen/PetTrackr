@@ -1,17 +1,25 @@
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Image, Pressable, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
 
 type Props = {
   imageUri?: string | null; // URL/uri til bilde (kan være null foreløpig)
   size?: number; // størrelse på sirkelen (default 54)
   onPressEdit: () => void; // hva som skjer når du trykker på edit-ikonet
+  isLoading?: boolean;
 };
 
 export default function ProfilePicture({
   imageUri,
   size = 54,
   onPressEdit,
+  isLoading = false,
 }: Props) {
   const borderRadius = size / 2;
 
@@ -32,10 +40,22 @@ export default function ProfilePicture({
         />
       )}
 
-      {/* Edit-badge (trykkbar) */}
+      {/* Loading overlay */}
+      {isLoading && (
+        <View style={[styles.loadingOverlay, { borderRadius }]}>
+          <ActivityIndicator />
+        </View>
+      )}
+
+      {/* Edit-badge */}
       <Pressable
         onPress={onPressEdit}
-        style={[styles.editBadge, { borderRadius: 14 }]}
+        disabled={isLoading}
+        style={[
+          styles.editBadge,
+          isLoading && styles.editBadgeDisabled,
+          { borderRadius: 14 },
+        ]}
         hitSlop={10}
       >
         <Feather name="edit-2" size={14} color="#111" />
@@ -67,5 +87,14 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
+  },
+  editBadgeDisabled: {
+    opacity: 0.6,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255,255,255,0.55)",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

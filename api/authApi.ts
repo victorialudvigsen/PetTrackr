@@ -2,6 +2,8 @@ import { auth } from "@/firebaseConfig";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  updateEmail,
+  updatePassword,
   updateProfile,
   User,
 } from "firebase/auth";
@@ -12,7 +14,7 @@ export async function signIn(email: string, password: string) {
     const userCredential = await signInWithEmailAndPassword(
       auth,
       email,
-      password
+      password,
     );
     console.log("Bruker logget inn:", userCredential.user);
     return userCredential.user;
@@ -33,7 +35,7 @@ export async function createUser(email: string, password: string) {
     const userCredentials = await createUserWithEmailAndPassword(
       auth,
       email,
-      password
+      password,
     );
     return userCredentials.user;
   } catch (error) {
@@ -48,5 +50,35 @@ export async function setUserDisplayName(user: User, displayName: string) {
     await updateProfile(user, { displayName });
   } catch (error) {
     console.error("Kunne ikke oppdatere displayName:", error);
+  }
+}
+
+// Oppdaterer displayName (navn) i Firebase Auth
+export async function updateUserDisplayName(user: User, displayName: string) {
+  try {
+    await updateProfile(user, { displayName });
+  } catch (error) {
+    console.error("Kunne ikke oppdatere displayName:", error);
+    throw error;
+  }
+}
+
+// Oppdaterer e-post i Firebase Auth
+export async function updateUserEmail(user: User, email: string) {
+  try {
+    await updateEmail(user, email);
+  } catch (error) {
+    console.error("Kunne ikke oppdatere e-post:", error);
+    throw error;
+  }
+}
+
+// Oppdaterer passord i Firebase Auth
+export async function updateUserPassword(user: User, password: string) {
+  try {
+    await updatePassword(user, password);
+  } catch (error) {
+    console.error("Kunne ikke oppdatere passord:", error);
+    throw error;
   }
 }
