@@ -14,10 +14,11 @@ import { useAuthSession } from "@/providers/authctx";
 import { pickProfilePicture } from "@/utils/pickProfilePicture";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -25,6 +26,11 @@ import {
   TextInput,
   View,
 } from "react-native";
+
+import * as petApi from "@/api/petApi";
+import AppHeader from "@/components/AppHeader";
+import { PetData } from "@/types/pet";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -55,11 +61,18 @@ export default function ProfilePage() {
     editPhone.trim() !== (phone ?? "").trim() ||
     editPassword.trim().length > 0; // passord teller kun hvis brukeren skrev noe
 
-  // My Pets dummy
-  const pets = [
-    { id: "1", name: "Lasse", type: "Dog" },
-    { id: "2", name: "Scott", type: "Dog" },
-  ];
+  // My Pets
+  const [pets, setPets] = useState<PetData[]>([]);
+  const [isLoadingPets, setIsLoadingPets] = useState(false);
+
+  const loadPets = useCallback(async () => {
+    if (!user?.uid) return;
+
+    setIsLoadingPets(true);
+    const result = await petApi.getAllPets(user.uid);
+    setPets(result);
+    setIsLoadingPets(false);
+  }, [user?.uid]);
 
   // UseEffect
   useEffect(() => {
@@ -87,20 +100,24 @@ export default function ProfilePage() {
     setLocalDisplayName(displayName);
   }, [displayName]);
 
+  // Oppdater pets når siden får fokus (f.eks. når du kommer tilbake fra addPet)
+  useFocusEffect(
+    useCallback(() => {
+      loadPets();
+    }, [loadPets]),
+  );
+
   //** JSX **/
   return (
     <View style={styles.screen}>
       {/* HEADER */}
-      <View style={styles.header}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() => router.replace("/")}
-        >
-          <Feather name="chevron-left" size={26} color="#111" />
-        </Pressable>
-
-        <Text style={styles.headerTitle}>Profile</Text>
-      </View>
+      <AppHeader
+        title="Profile"
+        onBack={() => router.replace("/")}
+        onMenuPress={() => {
+          console.log("meny");
+        }}
+      />
 
       {/* CONTENT (SCROLL) */}
       <ScrollView
@@ -262,7 +279,7 @@ export default function ProfilePage() {
                   >
                     {isSavingUserInfo && <ActivityIndicator size="small" />}
                     <Text style={styles.editLink}>
-                      {isSavingUserInfo ? "Lagrer..." : "Save"}
+                      {isSavingUserInfo ? "Saving..." : "Save"}
                     </Text>
                   </View>
                 ) : (
@@ -369,35 +386,63 @@ export default function ProfilePage() {
           <View style={styles.cardHeaderRow}>
             <Text style={styles.cardTitle}>My Pets</Text>
 
-            <Pressable style={styles.circleIconButton} onPress={() => {}}>
+            <Pressable
+              style={styles.circleIconButton}
+              onPress={() => router.push("/pets/addPet")}
+            >
               <Feather name="plus" size={16} color="#111" />
             </Pressable>
           </View>
 
           <View style={styles.divider} />
 
-          {pets.map((pet, index) => {
-            const isLast = index === pets.length - 1;
+          {/* Hvis ingen pets */}
+          {isLoadingPets ? (
+            <Text style={styles.emptyText}>Loading pets...</Text>
+          ) : pets.length === 0 ? (
+            <Text style={styles.emptyText}>
+              You haven’t added any pets yet.
+            </Text>
+          ) : (
+            pets.map((pet, index) => {
+              const isLast = index === pets.length - 1;
 
-            return (
-              <View key={pet.id}>
-                <Pressable style={styles.petRow} onPress={() => {}}>
-                  <View style={styles.petLeft}>
-                    <View style={styles.petAvatar} />
+              return (
+                <View key={pet.id}>
+                  <Pressable
+                    style={styles.petRow}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/pets/[id]",
+                        params: { id: pet.id },
+                      })
+                    }
+                  >
+                    <View style={styles.petLeft}>
+                      {/* Avatar */}
+                      {pet.photoUrl ? (
+                        <Image
+                          source={{ uri: pet.photoUrl }}
+                          style={styles.petAvatarImg}
+                        />
+                      ) : (
+                        <View style={styles.petAvatar} />
+                      )}
 
-                    <View style={styles.petTextWrap}>
-                      <Text style={styles.petName}>{pet.name}</Text>
-                      <Text style={styles.petType}>{pet.type}</Text>
+                      <View style={styles.petTextWrap}>
+                        <Text style={styles.petName}>{pet.name}</Text>
+                        <Text style={styles.petType}>{pet.type}</Text>
+                      </View>
                     </View>
-                  </View>
 
-                  <Feather name="chevron-right" size={22} color="#111" />
-                </Pressable>
+                    <Feather name="chevron-right" size={22} color="#111" />
+                  </Pressable>
 
-                {!isLast && <View style={styles.petRowDivider} />}
-              </View>
-            );
-          })}
+                  {!isLast && <View style={styles.petRowDivider} />}
+                </View>
+              );
+            })
+          )}
         </View>
 
         {/* LOG OUT CARD */}
@@ -420,13 +465,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#F6F2EE",
   },
 
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingTop: 18,
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-  },
   backButton: {
     width: 40,
     height: 40,
@@ -558,6 +596,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: "#D9D9D9",
   },
+  petAvatarImg: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
   petTextWrap: {
     flex: 1,
     gap: 2,
@@ -608,5 +651,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     fontWeight: "600",
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    paddingVertical: 16,
   },
 });

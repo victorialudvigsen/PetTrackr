@@ -24,14 +24,14 @@ export default function AuthenticationPage() {
   // Registrerer ny bruker i Firebase
   const handleRegister = async () => {
     if (!userName || !password || !email) {
-      Alert.alert("Feil", "Fyll ut brukernavn, e-post og passord.");
+      Alert.alert("Error", "Please fill in username, email, and password.");
       return;
     }
 
     try {
       await createUser(email, password, userName);
 
-      Alert.alert("Suksess", "Bruker registrert! Du blir nå logget inn");
+      Alert.alert("Success", "User registered! You are now being logged in.");
 
       // Nullstiller felter
       setUserName("");
@@ -41,7 +41,10 @@ export default function AuthenticationPage() {
       // Går tilbake til login
       setIsRegistering(false);
     } catch (error) {
-      Alert.alert("Feil", "Registreringen feilet. Sjekk e-post og passord.");
+      Alert.alert(
+        "Error",
+        "Registration failed. Please check your email and password.",
+      );
       console.log(error);
     }
   };
@@ -49,14 +52,17 @@ export default function AuthenticationPage() {
   // Logger inn med Firebase
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert("Feil", "Fyll ut både e-post og passord.");
+      Alert.alert("Error", "Please fill in both email and password.");
       return;
     }
 
     try {
       await signIn(email, password);
     } catch (error) {
-      Alert.alert("Feil", "Innlogging feilet. Sjekk e-post og passord.");
+      Alert.alert(
+        "Error",
+        "Login failed. Please check your email and password.",
+      );
       console.log(error);
     }
   };
@@ -70,16 +76,16 @@ export default function AuthenticationPage() {
         <View style={styles.mainContainer}>
           <Text style={styles.mainTitle}>PetTrackr</Text>
           <Text style={styles.title}>
-            {isRegistering ? "Registrer deg" : "Logg inn"}
+            {isRegistering ? "Register" : "Sign in"}
           </Text>
 
           {/* BRUKERNAVN */}
           {isRegistering && (
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Brukernavn</Text>
+              <Text style={styles.label}>Username</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Brukernavn"
+                placeholder="Username"
                 value={userName}
                 onChangeText={setUserName}
               />
@@ -88,10 +94,10 @@ export default function AuthenticationPage() {
 
           {/* E-POST */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>E-post</Text>
+            <Text style={styles.label}>E-mail</Text>
             <TextInput
               style={styles.input}
-              placeholder="E-post"
+              placeholder="E-mail"
               keyboardType="email-address"
               value={email}
               onChangeText={setEmail}
@@ -100,10 +106,10 @@ export default function AuthenticationPage() {
 
           {/* PASSORD */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Passord</Text>
+            <Text style={styles.label}>Password</Text>
             <TextInput
               style={styles.input}
-              placeholder="Passord"
+              placeholder="Password"
               secureTextEntry
               value={password}
               onChangeText={setPassword}
@@ -117,8 +123,8 @@ export default function AuthenticationPage() {
           >
             <Text style={styles.switchText}>
               {isRegistering
-                ? "Har du allerede en bruker? Logg inn"
-                : "Ingen bruker? Registrer deg her"}
+                ? "Already have an account? Sign in"
+                : "No account? Sign up here"}
             </Text>
           </Pressable>
 
@@ -128,7 +134,7 @@ export default function AuthenticationPage() {
             onPress={isRegistering ? handleRegister : handleLogin}
           >
             <Text style={styles.mainButtonText}>
-              {isRegistering ? "Registrer bruker" : "Logg inn"}
+              {isRegistering ? "Register user" : "Sign in"}
             </Text>
           </Pressable>
         </View>

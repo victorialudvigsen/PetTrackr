@@ -46,3 +46,27 @@ export async function uploadProfilePictureToFirebase(
     return null;
   }
 }
+
+export async function uploadPetPictureToFirebase(
+  uri: string,
+  userId: string,
+  petId: string,
+) {
+  const fetchResponse = await fetch(uri);
+  const blob = await fetchResponse.blob();
+
+  const uploadPath = `pets/${userId}/${petId}.jpg`;
+  const imageRef = await getStorageRef(uploadPath);
+
+  try {
+    console.log("Starting pet image upload...");
+    await uploadBytesResumable(imageRef, blob);
+    console.log("Pet image uploaded to firebase");
+
+    const downloadUrl = await getDownloadURL(imageRef);
+    return downloadUrl;
+  } catch (e) {
+    console.error("Error uploading pet image to firebase", e);
+    return null;
+  }
+}
