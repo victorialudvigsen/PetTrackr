@@ -111,13 +111,7 @@ export default function ProfilePage() {
   return (
     <View style={styles.screen}>
       {/* HEADER */}
-      <AppHeader
-        title="Profile"
-        onBack={() => router.replace("/")}
-        onMenuPress={() => {
-          console.log("meny");
-        }}
-      />
+      <AppHeader title="Profile" onBack={() => router.replace("/")} />
 
       {/* CONTENT (SCROLL) */}
       <ScrollView
@@ -443,13 +437,6 @@ export default function ProfilePage() {
               );
             })
           )}
-        </View>
-
-        {/* LOG OUT CARD */}
-        <View style={styles.card}>
-          <Pressable style={styles.logoutButton} onPress={signOut}>
-            <Text style={styles.logoutButtonText}>Sign out</Text>
-          </Pressable>
         </View>
 
         {/* Litt luft nederst så det ikke krasjer i tab bar */}

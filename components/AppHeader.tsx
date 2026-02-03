@@ -1,5 +1,5 @@
+import HeaderMenuButton from "@/components/HeaderMenuButton";
 import { Feather } from "@expo/vector-icons";
-import AntDesign from "@expo/vector-icons/AntDesign";
 import React from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -7,19 +7,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 type Props = {
   title: string;
   onBack?: () => void;
-  onMenuPress?: () => void;
-  showMenu?: boolean;
 };
 
-export default function AppHeader({
-  title,
-  onBack,
-  onMenuPress,
-  showMenu,
-}: Props) {
+export default function AppHeader({ title, onBack }: Props) {
   const insets = useSafeAreaInsets();
 
-  // Gir litt ekstra luft under status bar (juster tallet om ønskelig)
+  // Litt luft under status bar
   const paddingTop = Math.max(insets.top, 40);
 
   return (
@@ -31,7 +24,6 @@ export default function AppHeader({
           size={22}
           color="#111"
           style={{
-            // Finjustering for optisk alignment mot teksten
             marginTop: Platform.select({
               ios: 2,
               android: 4,
@@ -45,15 +37,9 @@ export default function AppHeader({
         {title}
       </Text>
 
-      {/* RIGHT SLOT MENY */}
+      {/* MENU (hamburger + drawer) */}
       <View style={styles.rightSlot}>
-        {showMenu !== false ? (
-          <Pressable onPress={onMenuPress} hitSlop={8}>
-            <AntDesign name="menu" size={18} color="#111" />
-          </Pressable>
-        ) : (
-          <View style={{ width: 40 }} />
-        )}
+        <HeaderMenuButton />
       </View>
     </View>
   );
@@ -81,13 +67,12 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "700",
     color: "#111",
-    marginLeft: 0,
+    marginLeft: 4,
   },
 
   rightSlot: {
     width: 40,
     alignItems: "flex-end",
     justifyContent: "center",
-    marginRight: 12,
   },
 });
