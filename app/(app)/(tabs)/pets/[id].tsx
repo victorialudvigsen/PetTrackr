@@ -21,7 +21,10 @@ import {
 
 export default function PetDetailPage() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from } = useLocalSearchParams<{
+    id: string;
+    from?: string;
+  }>();
   const { user } = useAuthSession();
 
   const [pet, setPet] = useState<PetData | null>(null);
@@ -203,7 +206,16 @@ export default function PetDetailPage() {
   return (
     <View style={styles.screen}>
       {/* HEADER */}
-      <AppHeader title={pet.name} onBack={() => router.replace("/profile")} />
+      <AppHeader
+        title={pet.name}
+        onBack={() => {
+          if (from === "profile") {
+            router.replace("/profile");
+          } else {
+            router.replace("/");
+          }
+        }}
+      />
 
       {/* CONTENT (SCROLL) */}
       <ScrollView

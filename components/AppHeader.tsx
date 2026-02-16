@@ -1,15 +1,24 @@
 import HeaderMenuButton from "@/components/HeaderMenuButton";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Props = {
-  title: string;
+  title?: string;
   onBack?: () => void;
+  showBack?: boolean;
+  showTitle?: boolean;
+  showMenu?: boolean;
 };
 
-export default function AppHeader({ title, onBack }: Props) {
+export default function AppHeader({
+  title,
+  onBack,
+  showBack,
+  showTitle,
+  showMenu,
+}: Props) {
   const insets = useSafeAreaInsets();
 
   // Litt luft under status bar
@@ -18,28 +27,30 @@ export default function AppHeader({ title, onBack }: Props) {
   return (
     <View style={[styles.header, { paddingTop }]}>
       {/* BACK */}
-      <Pressable style={styles.backButton} onPress={onBack} hitSlop={8}>
-        <Feather
-          name="chevron-left"
-          size={22}
-          color="#111"
-          style={{
-            marginTop: Platform.select({
-              ios: 2,
-              android: 4,
-            }),
-          }}
-        />
-      </Pressable>
+      {showBack !== false ? (
+        <Pressable style={styles.backButton} onPress={onBack} hitSlop={8}>
+          <Feather name="chevron-left" size={22} color="#111" />
+        </Pressable>
+      ) : (
+        <View style={{ width: 40 }} />
+      )}
 
       {/* TITLE */}
-      <Text style={styles.headerTitle} numberOfLines={1}>
-        {title}
-      </Text>
+      {showTitle !== false ? (
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          {title}
+        </Text>
+      ) : (
+        <View style={{ flex: 1 }} />
+      )}
 
-      {/* MENU (hamburger + drawer) */}
+      {/* MENU */}
       <View style={styles.rightSlot}>
-        <HeaderMenuButton />
+        {showMenu !== false ? (
+          <HeaderMenuButton />
+        ) : (
+          <View style={{ width: 40 }} />
+        )}
       </View>
     </View>
   );

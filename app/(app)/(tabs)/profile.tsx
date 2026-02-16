@@ -408,7 +408,7 @@ export default function ProfilePage() {
                     onPress={() =>
                       router.push({
                         pathname: "/pets/[id]",
-                        params: { id: pet.id },
+                        params: { id: pet.id, from: "profile" },
                       })
                     }
                   >
