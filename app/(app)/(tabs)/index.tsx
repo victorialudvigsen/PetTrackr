@@ -3,8 +3,9 @@ import AppHeader from "@/components/AppHeader";
 import { useAuthSession } from "@/providers/authctx";
 import { PetData } from "@/types/pet";
 import { Feather } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Image,
   Pressable,
@@ -21,22 +22,44 @@ export default function HomePage() {
   const [pets, setPets] = useState<PetData[]>([]);
   const [isLoadingPets, setIsLoadingPets] = useState(true);
 
-  // 🐾 Hent pets
+  const [localDisplayName, setLocalDisplayName] = useState<string | null>(null);
+
+  // 🔥 NY: Aktiv pet
+  const [activePetId, setActivePetId] = useState<string | null>(null);
+
   useEffect(() => {
-    async function fetchPets() {
-      if (!user?.uid) return;
-      setIsLoadingPets(true);
-
-      const result = await petApi.getAllPets(user.uid);
-      setPets(result ?? []);
-      setIsLoadingPets(false);
+    if (pets.length > 0 && !activePetId) {
+      setActivePetId(pets[0].id);
     }
+  }, [pets, activePetId]);
 
-    fetchPets();
-  }, [user?.uid]);
+  // 🐾 Hent pets
+  useFocusEffect(
+    useCallback(() => {
+      async function fetchPets() {
+        if (!user?.uid) return;
 
-  // 🎯 Aktiv pet = første i listen (midlertidig)
-  const activePet = pets.length > 0 ? pets[0] : null;
+        setIsLoadingPets(true);
+        const result = await petApi.getAllPets(user.uid);
+        setPets(result ?? []);
+        setIsLoadingPets(false);
+      }
+
+      fetchPets();
+    }, [user?.uid]),
+  );
+
+  // Henter brukerinfo
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        setLocalDisplayName(user.displayName ?? user.email ?? null);
+      }
+    }, [user]),
+  );
+
+  // 🎯 Aktiv pet basert på ID
+  const activePet = pets.find((p) => p.id === activePetId) ?? null;
 
   // 🌤 Greeting basert på klokkeslett
   const greeting = useMemo(() => {
@@ -63,11 +86,59 @@ export default function HomePage() {
         {/* GREETING */}
         <View style={styles.greetingWrap}>
           <Text style={styles.greetingText}>{greeting},</Text>
-          <Text style={styles.userName}>{userNameSession ?? "Friend"} 👋</Text>
+          <Text style={styles.userName}>{localDisplayName ?? "Friend"} 👋</Text>
           <Text style={styles.subGreeting}>
             {pets.length} pets • All good today
           </Text>
         </View>
+
+        {/* 🔥 PET SWITCHER */}
+        {pets.length > 1 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.petSwitcher}
+          >
+            {pets.map((pet) => {
+              const isActive = pet.id === activePetId;
+
+              return (
+                <Pressable
+                  key={pet.id}
+                  onPress={() => setActivePetId(pet.id)}
+                  style={styles.petSwitchItem}
+                >
+                  {pet.photoUrl ? (
+                    <Image
+                      source={{ uri: pet.photoUrl }}
+                      style={[
+                        styles.petSwitchImage,
+                        isActive && styles.petSwitchImageActive,
+                      ]}
+                    />
+                  ) : (
+                    <View
+                      style={[
+                        styles.petSwitchPlaceholder,
+                        isActive && styles.petSwitchImageActive,
+                      ]}
+                    />
+                  )}
+
+                  <Text
+                    style={[
+                      styles.petSwitchName,
+                      isActive && styles.petSwitchNameActive,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {pet.name}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        )}
 
         {/* ACTIVE PET CARD */}
         {activePet && (
@@ -176,6 +247,47 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     marginTop: 4,
+  },
+
+  /* 🔥 PET SWITCHER */
+  petSwitcher: {
+    paddingVertical: 6,
+    paddingBottom: 12,
+  },
+
+  petSwitchItem: {
+    alignItems: "center",
+    marginRight: 18,
+  },
+
+  petSwitchImage: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: "#D9D9D9",
+  },
+
+  petSwitchImageActive: {
+    borderWidth: 2,
+    borderColor: "#111",
+  },
+
+  petSwitchPlaceholder: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: "#3E3E3E",
+  },
+
+  petSwitchName: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 6,
+  },
+
+  petSwitchNameActive: {
+    color: "#111",
+    fontWeight: "700",
   },
 
   card: {
