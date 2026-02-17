@@ -40,6 +40,22 @@ export default function TabsLayout() {
           href: null,
         }}
       />
+
+      {/* Skjul pets/activity/[id] fra tab bar */}
+      <Tabs.Screen
+        name="pets/activity/[id]"
+        options={{
+          href: null,
+        }}
+      />
+
+      {/* Skjul pets/activity/log/[id] fra tab bar */}
+      <Tabs.Screen
+        name="pets/activity/log/[id]"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

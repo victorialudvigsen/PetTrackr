@@ -403,7 +403,15 @@ export default function PetDetailPage() {
           <View style={styles.divider} />
 
           {/* Dummy rows – samme layout-stil som designet ditt */}
-          <Pressable style={styles.activityRow} onPress={() => {}}>
+          <Pressable
+            style={styles.activityRow}
+            onPress={() =>
+              router.push({
+                pathname: "/pets/activity/[id]",
+                params: { id: pet.id },
+              })
+            }
+          >
             <View style={styles.activityLeft}>
               <View style={styles.activityIconWrap}>
                 <Feather name="activity" size={18} color="#111" />
@@ -411,7 +419,7 @@ export default function PetDetailPage() {
 
               <View>
                 <Text style={styles.activityTitle}>Activity</Text>
-                <Text style={styles.activitySubtitle}>Coming soon</Text>
+                <Text style={styles.activitySubtitle}>Track walks</Text>
               </View>
             </View>
 

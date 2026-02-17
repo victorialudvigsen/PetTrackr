@@ -7,6 +7,9 @@ import {
   doc,
   getDoc,
   getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
   setDoc,
 } from "firebase/firestore";
 
@@ -100,5 +103,40 @@ export async function deletePet(userId: string, petId: string) {
   } catch (e) {
     console.log("Error deleting pet", e);
     throw e;
+  }
+}
+
+// 🔹 Legger til en walk for et spesifikt dyr
+export async function addWalk(userId: string, petId: string, duration: number) {
+  try {
+    await addDoc(collection(db, "users", userId, "pets", petId, "walks"), {
+      duration,
+      createdAt: serverTimestamp(),
+    });
+
+    console.log("Walk added for pet:", petId);
+  } catch (e) {
+    console.log("Error adding walk:", e);
+    throw e;
+  }
+}
+
+// 🔹 Henter walks for et spesifikt dyr (nyeste først)
+export async function getWalks(userId: string, petId: string) {
+  try {
+    const q = query(
+      collection(db, "users", userId, "pets", petId, "walks"),
+      orderBy("createdAt", "desc"),
+    );
+
+    const snapshot = await getDocs(q);
+
+    return snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
+    }));
+  } catch (e) {
+    console.log("Error getting walks:", e);
+    return [];
   }
 }
