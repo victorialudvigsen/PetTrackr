@@ -3,6 +3,7 @@ import AppHeader from "@/components/AppHeader";
 import { useAuthSession } from "@/providers/authctx";
 import { PetData } from "@/types/pet";
 import { Feather } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -22,7 +23,10 @@ export default function PetActivityPage() {
   const [pet, setPet] = useState<PetData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 🔄 Hent pet for å vise navn i header
+  const [walks, setWalks] = useState<any[]>([]);
+  const [isLoadingWalks, setIsLoadingWalks] = useState(true);
+
+  // Henter pet for å vise navn i header
   useEffect(() => {
     async function fetchPet() {
       if (!user?.uid || !id) return;
@@ -35,6 +39,23 @@ export default function PetActivityPage() {
 
     fetchPet();
   }, [user?.uid, id]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      async function fetchWalks() {
+        if (!user?.uid || !id) return;
+
+        setIsLoadingWalks(true);
+
+        const result = await petApi.getWalks(user.uid, id);
+        setWalks(result ?? []);
+
+        setIsLoadingWalks(false);
+      }
+
+      fetchWalks();
+    }, [user?.uid, id]),
+  );
 
   if (isLoading || !pet) {
     return (
@@ -103,25 +124,31 @@ export default function PetActivityPage() {
           <Text style={styles.sectionTitle}>Recent Walks</Text>
           <View style={styles.divider} />
 
-          {/* Dummy entries */}
-          <View style={styles.walkRow}>
-            <Text style={styles.walkText}>🐾 Walk – 35 min</Text>
-          </View>
+          {isLoadingWalks ? (
+            <Text style={styles.emptyText}>Loading walks...</Text>
+          ) : walks.length === 0 ? (
+            <Text style={styles.emptyText}>No walks logged yet.</Text>
+          ) : (
+            walks.map((walk) => {
+              const date = walk.createdAt?.toDate?.() ?? new Date();
 
-          <View style={styles.rowDivider} />
-
-          <View style={styles.walkRow}>
-            <Text style={styles.walkText}>🐾 Walk – 20 min</Text>
-          </View>
-
-          <View style={styles.rowDivider} />
-
-          <View style={styles.walkRow}>
-            <Text style={styles.walkText}>🐾 Walk – 50 min</Text>
-          </View>
+              return (
+                <View key={walk.id} style={styles.walkRow}>
+                  <Text style={styles.walkDuration}>
+                    {walk.duration} min walk
+                  </Text>
+                  <Text style={styles.walkDate}>
+                    {date.toLocaleDateString()} •{" "}
+                    {date.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </Text>
+                </View>
+              );
+            })
+          )}
         </View>
-
-        <View style={{ height: 24 }} />
       </ScrollView>
     </View>
   );
@@ -234,5 +261,24 @@ const styles = StyleSheet.create({
   rowDivider: {
     height: 1,
     backgroundColor: "#F0F0F0",
+  },
+
+  walkDuration: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#111",
+  },
+
+  walkDate: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 2,
+  },
+
+  emptyText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    paddingVertical: 12,
   },
 });

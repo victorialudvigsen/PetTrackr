@@ -20,8 +20,9 @@ export default function LogWalkPage() {
 
   const [pet, setPet] = useState<PetData | null>(null);
   const [duration, setDuration] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
-  // 🔥 Hent riktig pet
+  // Henter riktig pet
   useEffect(() => {
     async function fetchPet() {
       if (!user?.uid || !id) return;
@@ -56,14 +57,41 @@ export default function LogWalkPage() {
           placeholder="e.g. 45"
         />
 
-        {/* Save button (kun UI nå) */}
+        {/* Save button */}
         <Pressable
-          style={styles.saveButton}
-          onPress={() => {
-            Alert.alert("Coming soon", "Walk logging will be added next.");
+          style={[styles.saveButton, { opacity: isSaving ? 0.6 : 1 }]}
+          disabled={isSaving}
+          onPress={async () => {
+            if (!user?.uid || !id) return;
+
+            const minutes = Number(duration);
+
+            if (!minutes || minutes <= 0) {
+              Alert.alert(
+                "Invalid input",
+                "Please enter a valid number of minutes.",
+              );
+              return;
+            }
+
+            try {
+              setIsSaving(true);
+
+              await petApi.addWalk(user.uid, id, minutes);
+
+              setDuration("");
+
+              router.replace(`/pets/activity/${id}`);
+            } catch (e) {
+              Alert.alert("Error", "Could not save walk.");
+            } finally {
+              setIsSaving(false);
+            }
           }}
         >
-          <Text style={styles.saveButtonText}>Save Walk</Text>
+          <Text style={styles.saveButtonText}>
+            {isSaving ? "Saving..." : "Save Walk"}
+          </Text>
         </Pressable>
       </View>
     </View>
