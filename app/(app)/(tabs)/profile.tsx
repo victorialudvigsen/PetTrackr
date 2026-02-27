@@ -40,7 +40,7 @@ export default function ProfilePage() {
   const [isUploading, setIsUploading] = useState(false);
   const [phone, setPhone] = useState<string | null>(null);
 
-  // Midlertidig dummy-data for UI (bytter vi senere til ekte data)
+  // Midlertidig dummy-data for UI
   const displayName = userNameSession ?? "Ingen navn";
   const email = user?.email ?? "Ingen e-post";
 
@@ -107,7 +107,6 @@ export default function ProfilePage() {
     }, [loadPets]),
   );
 
-  //** JSX **/
   return (
     <View style={styles.screen}>
       {/* HEADER */}
@@ -130,7 +129,7 @@ export default function ProfilePage() {
                 const uri = await pickProfilePicture();
                 if (!uri) return;
 
-                // Vis bildet med en gang (lokal preview)
+                // Viser bildet med en gang
                 setProfileImageUri(uri);
 
                 try {
@@ -143,10 +142,10 @@ export default function ProfilePage() {
                   );
                   if (!downloadUrl) return;
 
-                  // 2) Lagre URL i Firestore (users/{uid})
+                  // 2) Lagrer URL i Firestore (users/{uid})
                   await editUserAvatarUrl(user.uid, downloadUrl);
 
-                  // 3) Bytt fra lokal uri til ekte URL (så det fungerer etter refresh også)
+                  // 3) Bytter fra lokal uri til ekte URL
                   setProfileImageUri(downloadUrl);
                 } finally {
                   setIsUploading(false);
@@ -202,9 +201,9 @@ export default function ProfilePage() {
                       : 1,
                 }}
                 onPress={async () => {
-                  // 1) Gå INN i edit-modus
+                  // 1) Går INN i edit-modus
                   if (!isEditingUserInfo) {
-                    // Vi går INN i edit-modus: fyll feltene med dagens verdier
+                    // Vi går INN i edit-modus: fyller feltene med dagens verdier
                     setEditName(localDisplayName);
                     setEditEmail(email);
                     setEditPhone(phone ?? "");
@@ -213,7 +212,7 @@ export default function ProfilePage() {
                     return;
                   }
 
-                  // 2) Vi er i edit-modus og trykker "Lagre"
+                  // 2) Er i edit-modus og trykker "Lagre"
                   if (!user) return;
 
                   setIsSavingUserInfo(true);
@@ -575,7 +574,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     flex: 1,
-    paddingRight: 10, // så teksten ikke krasjer i chevron
+    paddingRight: 10,
   },
   petAvatar: {
     width: 40,

@@ -397,12 +397,12 @@ export default function PetDetailPage() {
           </View>
         </View>
 
-        {/* RECENT ACTIVITY CARD (kun UI/placeholder nå) */}
+        {/* RECENT ACTIVITY CARD */}
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Recent Activity</Text>
           <View style={styles.divider} />
 
-          {/* Dummy rows – samme layout-stil som designet ditt */}
+          {/* ACTIVITY */}
           <Pressable
             style={styles.activityRow}
             onPress={() =>
@@ -422,13 +422,21 @@ export default function PetDetailPage() {
                 <Text style={styles.activitySubtitle}>Track walks</Text>
               </View>
             </View>
-
             <Feather name="chevron-right" size={22} color="#111" />
           </Pressable>
 
           <View style={styles.rowDivider} />
 
-          <Pressable style={styles.activityRow} onPress={() => {}}>
+          {/* FOOD */}
+          <Pressable
+            style={styles.activityRow}
+            onPress={() =>
+              router.push({
+                pathname: "/pets/food/[id]",
+                params: { id: pet.id },
+              })
+            }
+          >
             <View style={styles.activityLeft}>
               <View style={styles.activityIconWrap}>
                 <Feather name="shopping-bag" size={18} color="#111" />
@@ -436,7 +444,7 @@ export default function PetDetailPage() {
 
               <View>
                 <Text style={styles.activityTitle}>Food</Text>
-                <Text style={styles.activitySubtitle}>Coming soon</Text>
+                <Text style={styles.activitySubtitle}>Track meals</Text>
               </View>
             </View>
 

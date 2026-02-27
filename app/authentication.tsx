@@ -143,7 +143,6 @@ export default function AuthenticationPage() {
   );
 }
 
-// ***STYLESHEET*** //
 const styles = StyleSheet.create({
   container: {
     flex: 1,

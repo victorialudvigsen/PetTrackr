@@ -42,7 +42,12 @@ export default function LogWalkPage() {
     <View style={styles.screen}>
       <AppHeader
         title={pet ? `Log Walk – ${pet.name}` : "Log Walk"}
-        onBack={() => router.back()}
+        onBack={() =>
+          router.replace({
+            pathname: "/pets/activity/[id]",
+            params: { id },
+          })
+        }
       />
 
       <View style={styles.content}>

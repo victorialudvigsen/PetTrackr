@@ -26,7 +26,6 @@ export default function PostFormModal({
 
   const handleSave = () => {
     if (title.trim().length === 0 || description.trim().length === 0) {
-      // veldig enkel validering – kunne evt. lagt på Alert
       return;
     }
 

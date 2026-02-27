@@ -36,7 +36,7 @@ export async function uploadProfilePictureToFirebase(
     console.log("Starting profile picture upload...");
     await uploadBytesResumable(imageRef, blob);
 
-    // Hent URL som kan brukes i appen
+    // Henter URL som kan brukes i appen
     const downloadUrl = await getDownloadURL(imageRef);
 
     console.log("Profile picture uploaded. URL:", downloadUrl);

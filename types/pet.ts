@@ -1,6 +1,6 @@
 export interface PetData {
-  id: string; // Firestore doc-id
+  id: string;
   name: string;
   type: string;
-  photoUrl?: string; // downloadUrl fra Firebase Storage (valgfri)
+  photoUrl?: string;
 }

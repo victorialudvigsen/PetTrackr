@@ -24,7 +24,7 @@ export default function HomePage() {
 
   const [localDisplayName, setLocalDisplayName] = useState<string | null>(null);
 
-  // 🔥 NY: Aktiv pet
+  // Aktiv pet
   const [activePetId, setActivePetId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export default function HomePage() {
     }
   }, [pets, activePetId]);
 
-  // 🐾 Hent pets
+  // Henter pets
   useFocusEffect(
     useCallback(() => {
       async function fetchPets() {
@@ -58,10 +58,10 @@ export default function HomePage() {
     }, [user]),
   );
 
-  // 🎯 Aktiv pet basert på ID
+  // Aktiv pet basert på ID
   const activePet = pets.find((p) => p.id === activePetId) ?? null;
 
-  // 🌤 Greeting basert på klokkeslett
+  // Greeting basert på klokkeslett
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
 
@@ -92,7 +92,7 @@ export default function HomePage() {
           </Text>
         </View>
 
-        {/* 🔥 PET SWITCHER */}
+        {/* PET SWITCHER */}
         {pets.length > 1 && (
           <ScrollView
             horizontal
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  /* 🔥 PET SWITCHER */
+  /* PET SWITCHER */
   petSwitcher: {
     paddingVertical: 6,
     paddingBottom: 12,

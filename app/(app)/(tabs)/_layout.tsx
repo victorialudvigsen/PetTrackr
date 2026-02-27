@@ -25,15 +25,15 @@ export default function TabsLayout() {
         }}
       />
 
-      {/* Skjul pets/addPet fra tab bar */}
+      {/* Skjuler pets/addPet fra tab bar */}
       <Tabs.Screen
         name="pets/addPet"
         options={{
-          href: null, // fjerner fra tab bar + deep link i tab context
+          href: null,
         }}
       />
 
-      {/* Skjul pets/[id] fra tab bar */}
+      {/* Skjuler pets/[id] fra tab bar */}
       <Tabs.Screen
         name="pets/[id]"
         options={{
@@ -41,7 +41,7 @@ export default function TabsLayout() {
         }}
       />
 
-      {/* Skjul pets/activity/[id] fra tab bar */}
+      {/* Skjuler pets/activity/[id] fra tab bar */}
       <Tabs.Screen
         name="pets/activity/[id]"
         options={{
@@ -49,9 +49,25 @@ export default function TabsLayout() {
         }}
       />
 
-      {/* Skjul pets/activity/log/[id] fra tab bar */}
+      {/* Skjuler pets/activity/log/[id] fra tab bar */}
       <Tabs.Screen
         name="pets/activity/log/[id]"
+        options={{
+          href: null,
+        }}
+      />
+
+      {/* Skjuler pets/food/[id] fra tab bar */}
+      <Tabs.Screen
+        name="pets/food/[id]"
+        options={{
+          href: null,
+        }}
+      />
+
+      {/* Skjuler pets/food/log/[id] fra tab bar */}
+      <Tabs.Screen
+        name="pets/food/log/[id]"
         options={{
           href: null,
         }}

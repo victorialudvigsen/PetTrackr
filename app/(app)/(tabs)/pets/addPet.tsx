@@ -40,7 +40,7 @@ export default function AddPetPage() {
     setIsSaving(true);
 
     try {
-      // 1) Lag pet i Firestore først (uten id)
+      // 1) Lager pet i Firestore
       const newPetId = await petApi.createPet(user.uid, {
         name: cleanName,
         type: cleanType,

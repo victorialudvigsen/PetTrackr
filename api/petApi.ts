@@ -106,7 +106,7 @@ export async function deletePet(userId: string, petId: string) {
   }
 }
 
-// 🔹 Legger til en walk for et spesifikt dyr
+// Legger til en walk for et spesifikt dyr
 export async function addWalk(userId: string, petId: string, duration: number) {
   try {
     await addDoc(collection(db, "users", userId, "pets", petId, "walks"), {
@@ -121,7 +121,7 @@ export async function addWalk(userId: string, petId: string, duration: number) {
   }
 }
 
-// 🔹 Henter walks for et spesifikt dyr (nyeste først)
+// Henter walks for et spesifikt dyr (nyeste først)
 export async function getWalks(userId: string, petId: string) {
   try {
     const q = query(
