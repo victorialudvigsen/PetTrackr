@@ -3,6 +3,8 @@ import { FoodEntryData } from "@/types/food";
 import {
   addDoc,
   collection,
+  deleteDoc,
+  doc,
   getDocs,
   orderBy,
   query,
@@ -53,5 +55,19 @@ export async function getFoodEntries(userId: string, petId: string) {
   } catch (e) {
     console.log("Error getting food entries:", e);
     return [] as FoodEntryData[];
+  }
+}
+
+// 3) Sletter en food-entry
+export async function deleteFoodEntry(
+  userId: string,
+  petId: string,
+  entryId: string,
+) {
+  try {
+    await deleteDoc(doc(db, "users", userId, "pets", petId, "food", entryId));
+  } catch (e) {
+    console.log("Error deleting food entry:", e);
+    throw e;
   }
 }

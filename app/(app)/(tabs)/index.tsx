@@ -1,6 +1,9 @@
+import * as foodApi from "@/api/foodApi";
 import * as petApi from "@/api/petApi";
+import * as walkApi from "@/api/walkApi";
 import AppHeader from "@/components/AppHeader";
 import { useAuthSession } from "@/providers/authctx";
+import { FoodEntryData } from "@/types/food";
 import { PetData } from "@/types/pet";
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
@@ -26,6 +29,10 @@ export default function HomePage() {
 
   // Aktiv pet
   const [activePetId, setActivePetId] = useState<string | null>(null);
+
+  // Recent activity (for active pet)
+  const [latestWalk, setLatestWalk] = useState<any | null>(null);
+  const [latestMeal, setLatestMeal] = useState<FoodEntryData | null>(null);
 
   useEffect(() => {
     if (pets.length > 0 && !activePetId) {
@@ -56,6 +63,25 @@ export default function HomePage() {
         setLocalDisplayName(user.displayName ?? user.email ?? null);
       }
     }, [user]),
+  );
+
+  // Henter siste måltid og tur
+  useFocusEffect(
+    React.useCallback(() => {
+      async function fetchRecentActivity() {
+        if (!user?.uid || !activePetId) return;
+
+        // Henter walks
+        const walks = await walkApi.getWalks(user.uid, activePetId);
+        setLatestWalk(walks.length > 0 ? walks[0] : null);
+
+        // Henter meals
+        const meals = await foodApi.getFoodEntries(user.uid, activePetId);
+        setLatestMeal(meals.length > 0 ? meals[0] : null);
+      }
+
+      fetchRecentActivity();
+    }, [user?.uid, activePetId]),
   );
 
   // Aktiv pet basert på ID
@@ -177,9 +203,26 @@ export default function HomePage() {
               { icon: "activity", label: "Walk" },
               { icon: "shopping-bag", label: "Food" },
               { icon: "plus-square", label: "Meds" },
-              { icon: "bar-chart-2", label: "Weight" },
             ].map((item) => (
-              <Pressable key={item.label} style={styles.quickItem}>
+              <Pressable
+                key={item.label}
+                style={styles.quickItem}
+                onPress={() => {
+                  if (item.label === "Walk") {
+                    router.push({
+                      pathname: "/pets/activity/[id]",
+                      params: { id: activePet.id },
+                    });
+                  }
+
+                  if (item.label === "Food") {
+                    router.push({
+                      pathname: "/pets/food/[id]",
+                      params: { id: activePet.id },
+                    });
+                  }
+                }}
+              >
                 <View style={styles.quickCircle}>
                   <Feather name={item.icon as any} size={20} color="#111" />
                 </View>
@@ -204,8 +247,19 @@ export default function HomePage() {
           <Text style={styles.sectionTitle}>Recent Activity</Text>
           <View style={styles.divider} />
 
-          <Text style={styles.todayText}>🐾 Walk – 40 min</Text>
-          <Text style={styles.todayText}>🍖 Food – 200g</Text>
+          {latestWalk ? (
+            <Text style={styles.todayText}>
+              🐾 Walk – {latestWalk.duration} min
+            </Text>
+          ) : (
+            <Text style={styles.todayText}>🐾 No walks yet</Text>
+          )}
+
+          {latestMeal ? (
+            <Text style={styles.todayText}>🍖 Food – {latestMeal.grams} g</Text>
+          ) : (
+            <Text style={styles.todayText}>🍖 No meals yet</Text>
+          )}
         </View>
 
         <View style={{ height: 24 }} />

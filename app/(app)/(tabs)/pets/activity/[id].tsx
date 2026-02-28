@@ -1,4 +1,5 @@
 import * as petApi from "@/api/petApi";
+import * as walkApi from "@/api/walkApi";
 import AppHeader from "@/components/AppHeader";
 import { useAuthSession } from "@/providers/authctx";
 import { PetData } from "@/types/pet";
@@ -8,6 +9,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -47,7 +49,7 @@ export default function PetActivityPage() {
 
         setIsLoadingWalks(true);
 
-        const result = await petApi.getWalks(user.uid, id);
+        const result = await walkApi.getWalks(user.uid, id);
         setWalks(result ?? []);
 
         setIsLoadingWalks(false);
@@ -133,17 +135,52 @@ export default function PetActivityPage() {
               const date = walk.createdAt?.toDate?.() ?? new Date();
 
               return (
-                <View key={walk.id} style={styles.walkRow}>
-                  <Text style={styles.walkDuration}>
-                    {walk.duration} min walk
-                  </Text>
-                  <Text style={styles.walkDate}>
-                    {date.toLocaleDateString()} •{" "}
-                    {date.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </Text>
+                <View key={walk.id} style={styles.row}>
+                  <View style={styles.rowLeft}>
+                    <View>
+                      <Text style={styles.rowText}>{walk.duration} min</Text>
+                      <Text style={styles.walkDate}>
+                        {date.toLocaleDateString()} •{" "}
+                        {date.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Pressable
+                    onPress={() => {
+                      Alert.alert(
+                        "Delete walk",
+                        "Are you sure you want to delete this walk?",
+                        [
+                          { text: "Cancel", style: "cancel" },
+                          {
+                            text: "Delete",
+                            style: "destructive",
+                            onPress: async () => {
+                              if (!user?.uid || !pet?.id) return;
+
+                              await walkApi.deleteWalk(
+                                user.uid,
+                                pet.id,
+                                walk.id,
+                              );
+
+                              const updated = await walkApi.getWalks(
+                                user.uid,
+                                pet.id,
+                              );
+                              setWalks(updated);
+                            },
+                          },
+                        ],
+                      );
+                    }}
+                  >
+                    <Feather name="trash-2" size={18} color="#B00020" />
+                  </Pressable>
                 </View>
               );
             })
@@ -280,5 +317,25 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     paddingVertical: 12,
+  },
+
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+  },
+
+  rowLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+
+  rowText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#111",
   },
 });

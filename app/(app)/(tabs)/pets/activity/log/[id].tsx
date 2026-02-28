@@ -1,4 +1,5 @@
 import * as petApi from "@/api/petApi";
+import * as walkApi from "@/api/walkApi";
 import AppHeader from "@/components/AppHeader";
 import { useAuthSession } from "@/providers/authctx";
 import { PetData } from "@/types/pet";
@@ -82,7 +83,7 @@ export default function LogWalkPage() {
             try {
               setIsSaving(true);
 
-              await petApi.addWalk(user.uid, id, minutes);
+              await walkApi.addWalk(user.uid, id, minutes);
 
               setDuration("");
 

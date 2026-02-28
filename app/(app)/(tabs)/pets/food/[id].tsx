@@ -7,6 +7,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -141,7 +142,39 @@ export default function FoodPage() {
                   <Text style={styles.rowText}>{entry.grams} g</Text>
                 </View>
 
-                <Text style={styles.rowRightText}>Saved</Text>
+                <Pressable
+                  onPress={() => {
+                    Alert.alert(
+                      "Delete meal",
+                      "Are you sure you want to delete this meal?",
+                      [
+                        { text: "Cancel", style: "cancel" },
+                        {
+                          text: "Delete",
+                          style: "destructive",
+                          onPress: async () => {
+                            if (!user?.uid || !pet?.id) return;
+
+                            await foodApi.deleteFoodEntry(
+                              user.uid,
+                              pet.id,
+                              entry.id,
+                            );
+
+                            // Oppdater listen etter sletting
+                            const updated = await foodApi.getFoodEntries(
+                              user.uid,
+                              pet.id,
+                            );
+                            setFoodEntries(updated);
+                          },
+                        },
+                      ],
+                    );
+                  }}
+                >
+                  <Feather name="trash-2" size={18} color="#B00020" />
+                </Pressable>
               </View>
             ))
           )}
