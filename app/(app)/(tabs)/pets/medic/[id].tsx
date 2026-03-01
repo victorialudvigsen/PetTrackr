@@ -1,7 +1,6 @@
-import * as petApi from "@/api/petApi";
-import * as walkApi from "@/api/walkApi";
 import AppHeader from "@/components/AppHeader";
 import { useAuthSession } from "@/providers/authctx";
+import { MedicEntryData } from "@/types/medic";
 import { PetData } from "@/types/pet";
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
@@ -17,7 +16,10 @@ import {
   View,
 } from "react-native";
 
-export default function PetActivityPage() {
+import * as medicApi from "@/api/medicApi";
+import * as petApi from "@/api/petApi";
+
+export default function MedicPage() {
   const router = useRouter();
   const { id, from } = useLocalSearchParams<{
     id: string;
@@ -28,10 +30,10 @@ export default function PetActivityPage() {
   const [pet, setPet] = useState<PetData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [walks, setWalks] = useState<any[]>([]);
-  const [isLoadingWalks, setIsLoadingWalks] = useState(true);
+  const [meds, setMeds] = useState<MedicEntryData[]>([]);
+  const [isLoadingMeds, setIsLoadingMeds] = useState(true);
 
-  // Henter pet for å vise navn i header
+  // Henter pet (for navn i header)
   useEffect(() => {
     async function fetchPet() {
       if (!user?.uid || !id) return;
@@ -45,20 +47,19 @@ export default function PetActivityPage() {
     fetchPet();
   }, [user?.uid, id]);
 
+  // Henter meds når siden får fokus
   useFocusEffect(
     React.useCallback(() => {
-      async function fetchWalks() {
+      async function fetchMeds() {
         if (!user?.uid || !id) return;
 
-        setIsLoadingWalks(true);
-
-        const result = await walkApi.getWalks(user.uid, id);
-        setWalks(result ?? []);
-
-        setIsLoadingWalks(false);
+        setIsLoadingMeds(true);
+        const result = await medicApi.getMedicEntries(user.uid, id);
+        setMeds(result);
+        setIsLoadingMeds(false);
       }
 
-      fetchWalks();
+      fetchMeds();
     }, [user?.uid, id]),
   );
 
@@ -66,14 +67,13 @@ export default function PetActivityPage() {
     return (
       <View style={styles.center}>
         <ActivityIndicator />
-        <Text style={{ marginTop: 8 }}>Loading activity...</Text>
+        <Text style={{ marginTop: 8 }}>Loading medication...</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.screen}>
-      {/* HEADER */}
       <AppHeader
         title={pet.name}
         onBack={() => {
@@ -94,23 +94,23 @@ export default function PetActivityPage() {
       >
         {/* TITLE */}
         <View style={styles.titleWrap}>
-          <Text style={styles.pageTitle}>Activity</Text>
+          <Text style={styles.pageTitle}>Medication</Text>
           <Text style={styles.pageSubtitle}>
-            Track walks and daily movement
+            Track medication and treatments
           </Text>
         </View>
 
-        {/* LOG WALK CARD */}
+        {/* LOG MEDIC CARD */}
         <View style={styles.card}>
           <View style={styles.logRow}>
             <View style={styles.iconCircle}>
-              <Feather name="activity" size={22} color="#111" />
+              <Feather name="plus-square" size={22} color="#111" />
             </View>
 
             <View style={{ flex: 1 }}>
-              <Text style={styles.logTitle}>Log a walk</Text>
+              <Text style={styles.logTitle}>Log medication</Text>
               <Text style={styles.logSubtitle}>
-                Record duration and track activity
+                Record name, dosage and notes
               </Text>
             </View>
 
@@ -118,7 +118,7 @@ export default function PetActivityPage() {
               style={styles.addButton}
               onPress={() =>
                 router.push({
-                  pathname: "/pets/activity/log/[id]",
+                  pathname: "/pets/medic/log/[id]",
                   params: { id },
                 })
               }
@@ -128,71 +128,68 @@ export default function PetActivityPage() {
           </View>
         </View>
 
-        {/* RECENT WALKS */}
+        {/* RECENT MEDICATION */}
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Recent Walks</Text>
+          <Text style={styles.sectionTitle}>Recent medication</Text>
           <View style={styles.divider} />
 
-          {isLoadingWalks ? (
-            <Text style={styles.emptyText}>Loading walks...</Text>
-          ) : walks.length === 0 ? (
-            <Text style={styles.emptyText}>No walks logged yet.</Text>
+          {isLoadingMeds ? (
+            <Text style={styles.emptyText}>Loading medication...</Text>
+          ) : meds.length === 0 ? (
+            <Text style={styles.emptyText}>No medication logged yet.</Text>
           ) : (
-            walks.map((walk) => {
-              const date = walk.createdAt?.toDate?.() ?? new Date();
-
-              return (
-                <View key={walk.id} style={styles.row}>
-                  <View style={styles.rowLeft}>
-                    <View>
-                      <Text style={styles.rowText}>{walk.duration} min</Text>
-                      <Text style={styles.walkDate}>
-                        {date.toLocaleDateString()} •{" "}
-                        {date.toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </Text>
-                    </View>
+            meds.slice(0, 10).map((entry) => (
+              <View key={entry.id} style={styles.row}>
+                <View style={styles.rowLeft}>
+                  <View style={styles.rowIconWrap}>
+                    <Feather name="heart" size={16} color="#111" />
                   </View>
 
-                  <Pressable
-                    onPress={() => {
-                      Alert.alert(
-                        "Delete walk",
-                        "Are you sure you want to delete this walk?",
-                        [
-                          { text: "Cancel", style: "cancel" },
-                          {
-                            text: "Delete",
-                            style: "destructive",
-                            onPress: async () => {
-                              if (!user?.uid || !pet?.id) return;
-
-                              await walkApi.deleteWalk(
-                                user.uid,
-                                pet.id,
-                                walk.id,
-                              );
-
-                              const updated = await walkApi.getWalks(
-                                user.uid,
-                                pet.id,
-                              );
-                              setWalks(updated);
-                            },
-                          },
-                        ],
-                      );
-                    }}
-                  >
-                    <Feather name="trash-2" size={18} color="#B00020" />
-                  </Pressable>
+                  <View>
+                    <Text style={styles.rowText}>
+                      {entry.name} – {entry.dosage}
+                    </Text>
+                  </View>
                 </View>
-              );
-            })
+
+                <Pressable
+                  onPress={() => {
+                    Alert.alert(
+                      "Delete medication",
+                      "Are you sure you want to delete this entry?",
+                      [
+                        { text: "Cancel", style: "cancel" },
+                        {
+                          text: "Delete",
+                          style: "destructive",
+                          onPress: async () => {
+                            if (!user?.uid || !pet?.id) return;
+
+                            await medicApi.deleteMedicEntry(
+                              user.uid,
+                              pet.id,
+                              entry.id,
+                            );
+
+                            const updated = await medicApi.getMedicEntries(
+                              user.uid,
+                              pet.id,
+                            );
+                            setMeds(updated);
+                          },
+                        },
+                      ],
+                    );
+                  }}
+                >
+                  <Feather name="trash-2" size={18} color="#B00020" />
+                </Pressable>
+              </View>
+            ))
           )}
         </View>
+
+        <View style={{ height: 18 }} />
       </ScrollView>
     </View>
   );
@@ -203,36 +200,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F6F2EE",
   },
-
   center: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#F6F2EE",
   },
-
   content: {
     paddingHorizontal: 16,
     paddingTop: 10,
     gap: 16,
   },
-
   titleWrap: {
     marginTop: 8,
   },
-
   pageTitle: {
     fontSize: 24,
     fontWeight: "700",
     color: "#111",
   },
-
   pageSubtitle: {
     fontSize: 14,
     color: "#666",
     marginTop: 4,
   },
-
   card: {
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
@@ -243,13 +234,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
   },
-
   logRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
   },
-
   iconCircle: {
     width: 50,
     height: 50,
@@ -258,19 +247,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
   logTitle: {
     fontSize: 16,
     fontWeight: "700",
     color: "#111",
   },
-
   logSubtitle: {
     fontSize: 13,
     color: "#666",
     marginTop: 4,
   },
-
   addButton: {
     width: 36,
     height: 36,
@@ -279,67 +265,42 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
   sectionTitle: {
     fontSize: 14,
     fontWeight: "700",
     color: "#111",
     marginBottom: 8,
   },
-
   divider: {
     height: 1,
     backgroundColor: "#EDEDED",
     marginBottom: 10,
   },
-
-  walkRow: {
-    paddingVertical: 10,
-  },
-
-  walkText: {
-    fontSize: 14,
-    color: "#444",
-  },
-
-  rowDivider: {
-    height: 1,
-    backgroundColor: "#F0F0F0",
-  },
-
-  walkDuration: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#111",
-  },
-
-  walkDate: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 2,
-  },
-
   emptyText: {
     fontSize: 14,
     color: "#666",
     textAlign: "center",
     paddingVertical: 12,
   },
-
   row: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 12,
   },
-
   rowLeft: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    flex: 1,
   },
-
+  rowIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: "#F3F0EC",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   rowText: {
     fontSize: 14,
     fontWeight: "700",

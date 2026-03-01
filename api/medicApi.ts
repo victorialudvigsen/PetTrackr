@@ -1,0 +1,79 @@
+import { db } from "@/firebaseConfig";
+import { MedicEntryData } from "@/types/medic";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+} from "firebase/firestore";
+
+// Path: users/{uid}/pets/{petId}/meds
+function medsCollection(userId: string, petId: string) {
+  return collection(db, "users", userId, "pets", petId, "meds");
+}
+
+// 1) Legger til medic-entry
+export async function addMedicEntry(
+  userId: string,
+  petId: string,
+  data: { name: string; dosage: string; note?: string },
+) {
+  try {
+    const ref = await addDoc(medsCollection(userId, petId), {
+      name: data.name,
+      dosage: data.dosage,
+      note: data.note ?? null,
+      createdAt: serverTimestamp(),
+
+      // klar for reminder senere
+      scheduledFor: null,
+    });
+
+    return ref.id;
+  } catch (e) {
+    console.log("Error adding medic entry:", e);
+    throw e;
+  }
+}
+
+// 2) Hent med-entries (nyeste først)
+export async function getMedicEntries(userId: string, petId: string) {
+  try {
+    const q = query(
+      medsCollection(userId, petId),
+      orderBy("createdAt", "desc"),
+    );
+    const snap = await getDocs(q);
+
+    const items = snap.docs.map(
+      (d) =>
+        ({
+          id: d.id,
+          ...(d.data() as Omit<MedicEntryData, "id">),
+        }) as MedicEntryData,
+    );
+
+    return items;
+  } catch (e) {
+    console.log("Error getting medic entries:", e);
+    return [] as MedicEntryData[];
+  }
+}
+
+// 3) Sletter en medic-entry
+export async function deleteMedicEntry(
+  userId: string,
+  petId: string,
+  entryId: string,
+) {
+  try {
+    await deleteDoc(doc(db, "users", userId, "pets", petId, "meds", entryId));
+  } catch (e) {
+    console.log("Error deleting medic entry:", e);
+    throw e;
+  }
+}

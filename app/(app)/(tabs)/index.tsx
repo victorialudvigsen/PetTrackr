@@ -203,6 +203,7 @@ export default function HomePage() {
               { icon: "activity", label: "Walk" },
               { icon: "shopping-bag", label: "Food" },
               { icon: "plus-square", label: "Meds" },
+              { icon: "", label: "Reminder" },
             ].map((item) => (
               <Pressable
                 key={item.label}
@@ -211,14 +212,21 @@ export default function HomePage() {
                   if (item.label === "Walk") {
                     router.push({
                       pathname: "/pets/activity/[id]",
-                      params: { id: activePet.id },
+                      params: { id: activePet.id, from: "index" },
                     });
                   }
 
                   if (item.label === "Food") {
                     router.push({
                       pathname: "/pets/food/[id]",
-                      params: { id: activePet.id },
+                      params: { id: activePet.id, from: "index" },
+                    });
+                  }
+
+                  if (item.label === "Meds") {
+                    router.push({
+                      pathname: "/pets/medic/[id]",
+                      params: { id: activePet.id, from: "index" },
                     });
                   }
                 }}

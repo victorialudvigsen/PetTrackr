@@ -72,6 +72,22 @@ export default function TabsLayout() {
           href: null,
         }}
       />
+
+      {/* Skjuler pets/medic/[id] fra tab bar */}
+      <Tabs.Screen
+        name="pets/medic/[id]"
+        options={{
+          href: null,
+        }}
+      />
+
+      {/* Skjuler pets/medic/log/[id] fra tab bar */}
+      <Tabs.Screen
+        name="pets/medic/log/[id]"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

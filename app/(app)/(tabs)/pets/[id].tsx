@@ -408,7 +408,7 @@ export default function PetDetailPage() {
             onPress={() =>
               router.push({
                 pathname: "/pets/activity/[id]",
-                params: { id: pet.id },
+                params: { id: pet.id, from: "profile" },
               })
             }
           >
@@ -433,7 +433,7 @@ export default function PetDetailPage() {
             onPress={() =>
               router.push({
                 pathname: "/pets/food/[id]",
-                params: { id: pet.id },
+                params: { id: pet.id, from: "profile" },
               })
             }
           >
@@ -453,15 +453,26 @@ export default function PetDetailPage() {
 
           <View style={styles.rowDivider} />
 
-          <Pressable style={styles.activityRow} onPress={() => {}}>
+          {/* MEDS */}
+          <Pressable
+            style={styles.activityRow}
+            onPress={() =>
+              router.push({
+                pathname: "/pets/medic/[id]",
+                params: { id: pet.id, from: "profile" },
+              })
+            }
+          >
             <View style={styles.activityLeft}>
               <View style={styles.activityIconWrap}>
                 <Feather name="plus-square" size={18} color="#111" />
               </View>
 
               <View>
-                <Text style={styles.activityTitle}>Veterinarian</Text>
-                <Text style={styles.activitySubtitle}>Coming soon</Text>
+                <Text style={styles.activityTitle}>Medication</Text>
+                <Text style={styles.activitySubtitle}>
+                  Track medication and treatments
+                </Text>
               </View>
             </View>
 

@@ -21,7 +21,10 @@ import { FoodEntryData } from "@/types/food";
 
 export default function FoodPage() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from } = useLocalSearchParams<{
+    id: string;
+    from?: string;
+  }>();
   const { user } = useAuthSession();
 
   const [pet, setPet] = useState<PetData | null>(null);
@@ -76,12 +79,16 @@ export default function FoodPage() {
     <View style={styles.screen}>
       <AppHeader
         title={pet.name}
-        onBack={() =>
-          router.replace({
-            pathname: "/pets/[id]",
-            params: { id: pet.id, from: "food" },
-          })
-        }
+        onBack={() => {
+          if (from === "index") {
+            router.replace("/");
+          } else {
+            router.replace({
+              pathname: "/pets/[id]",
+              params: { id: pet.id },
+            });
+          }
+        }}
       />
 
       <ScrollView
