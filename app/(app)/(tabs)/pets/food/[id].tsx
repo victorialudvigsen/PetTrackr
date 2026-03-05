@@ -2,6 +2,7 @@ import AppHeader from "@/components/AppHeader";
 import { useAuthSession } from "@/providers/authctx";
 import { PetData } from "@/types/pet";
 import { Feather } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -18,6 +19,7 @@ import {
 import * as foodApi from "@/api/foodApi";
 import * as petApi from "@/api/petApi";
 import { FoodEntryData } from "@/types/food";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 export default function FoodPage() {
   const router = useRouter();
@@ -106,7 +108,7 @@ export default function FoodPage() {
         <View style={styles.card}>
           <View style={styles.logRow}>
             <View style={styles.iconCircle}>
-              <Feather name="shopping-bag" size={22} color="#111" />
+              <Ionicons name="fast-food-sharp" size={22} color="black" />
             </View>
 
             <View style={{ flex: 1 }}>
@@ -144,7 +146,11 @@ export default function FoodPage() {
               <View key={entry.id} style={styles.row}>
                 <View style={styles.rowLeft}>
                   <View style={styles.rowIconWrap}>
-                    <Feather name="coffee" size={16} color="#111" />
+                    <MaterialCommunityIcons
+                      name="food-steak"
+                      size={16}
+                      color="black"
+                    />
                   </View>
                   <Text style={styles.rowText}>{entry.grams} g</Text>
                 </View>

@@ -84,6 +84,8 @@ export default function LogFoodPage() {
             try {
               await foodApi.addFoodEntry(user.uid, id, gramsNumber);
 
+              setGrams("");
+
               router.replace({
                 pathname: "/pets/food/[id]",
                 params: { id },

@@ -1,10 +1,12 @@
 import { useAuthSession } from "@/providers/authctx";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { BlurView } from "expo-blur";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
   Modal,
+  PanResponder,
   Pressable,
   StyleSheet,
   Text,
@@ -13,7 +15,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Props = {
-  // valgfritt: hvis du vil ha callbacks på menyvalg senere
   onOpenChange?: (open: boolean) => void;
 };
 
@@ -25,12 +26,9 @@ export default function HeaderMenuButton({ onOpenChange }: Props) {
   const screenWidth = Dimensions.get("window").width;
   const drawerWidth = Math.min(320, Math.round(screenWidth * 0.82));
 
-  // Animated value: 0 = skjult, 1 = synlig
   const progress = useRef(new Animated.Value(0)).current;
 
   const translateX = useMemo(() => {
-    // Når progress=0 -> +drawerWidth (utenfor skjerm)
-    // Når progress=1 -> 0 (på skjerm)
     return progress.interpolate({
       inputRange: [0, 1],
       outputRange: [drawerWidth, 0],
@@ -43,10 +41,9 @@ export default function HeaderMenuButton({ onOpenChange }: Props) {
   };
 
   const closeMenu = () => {
-    // Lukk med animasjon først, så fjern modal
     Animated.timing(progress, {
       toValue: 0,
-      duration: 180,
+      duration: 200,
       useNativeDriver: true,
     }).start(() => {
       setOpen(false);
@@ -54,21 +51,48 @@ export default function HeaderMenuButton({ onOpenChange }: Props) {
     });
   };
 
-  // Når open blir true -> spill inn animasjon
   useEffect(() => {
     if (!open) return;
 
     progress.setValue(0);
-    Animated.timing(progress, {
+
+    // Spring gir mer "native" følelse
+    Animated.spring(progress, {
       toValue: 1,
-      duration: 200,
+      friction: 8,
+      tension: 80,
       useNativeDriver: true,
     }).start();
   }, [open, progress]);
 
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 10;
+      },
+
+      onPanResponderMove: (_, gestureState) => {
+        const newProgress = 1 - gestureState.dx / drawerWidth;
+        progress.setValue(Math.min(Math.max(newProgress, 0), 1));
+      },
+
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dx > 80) {
+          closeMenu();
+        } else {
+          Animated.spring(progress, {
+            toValue: 1,
+            friction: 8,
+            tension: 80,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    }),
+  ).current;
+
   return (
     <>
-      {/* Selve knappen i header (hamburger-ikon) */}
       <Pressable
         onPress={openMenu}
         style={({ pressed }) => [
@@ -80,14 +104,49 @@ export default function HeaderMenuButton({ onOpenChange }: Props) {
         <AntDesign name="menu" size={18} color="#111" />
       </Pressable>
 
-      {/* “Drop-in” meny */}
-      <Modal visible={open} transparent animationType="none">
+      <Modal
+        visible={open}
+        transparent
+        animationType="none"
+        statusBarTranslucent
+      >
         <View style={styles.modalRoot}>
-          {/* Mørk overlay (trykk for å lukke) */}
-          <Pressable style={styles.backdrop} onPress={closeMenu} />
+          {/* BACKDROP */}
+          <View style={{ flex: 1 }}>
+            {/* BLUR */}
+            <Animated.View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  opacity: progress,
+                },
+              ]}
+            >
+              <BlurView
+                intensity={70}
+                tint="dark"
+                experimentalBlurMethod="dimezisBlurView"
+                style={StyleSheet.absoluteFill}
+              />
+            </Animated.View>
 
-          {/* Drawer */}
+            {/* DIM */}
+            <Animated.View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  backgroundColor: "rgba(238,238,238,0.15)",
+                  opacity: progress,
+                },
+              ]}
+            />
+
+            <Pressable style={StyleSheet.absoluteFill} onPress={closeMenu} />
+          </View>
+
+          {/* DRAWER */}
           <Animated.View
+            {...panResponder.panHandlers}
             style={[
               styles.drawer,
               {
@@ -97,7 +156,6 @@ export default function HeaderMenuButton({ onOpenChange }: Props) {
               },
             ]}
           >
-            {/* Header inne i menyen */}
             <View style={styles.drawerHeader}>
               <Text style={styles.drawerTitle}>Menu</Text>
 
@@ -114,20 +172,19 @@ export default function HeaderMenuButton({ onOpenChange }: Props) {
 
             <View style={styles.divider} />
 
-            {/* Menypunkter (UI placeholder) */}
-            <Pressable style={styles.menuItem} onPress={() => {}}>
+            <Pressable style={styles.menuItem}>
               <Text style={styles.menuItemText}>Settings (coming soon)</Text>
             </Pressable>
 
             <View style={styles.itemDivider} />
 
-            <Pressable style={styles.menuItem} onPress={() => {}}>
+            <Pressable style={styles.menuItem}>
               <Text style={styles.menuItemText}>Help (coming soon)</Text>
             </Pressable>
 
             <View style={styles.itemDivider} />
 
-            <Pressable style={styles.menuItem} onPress={() => {}}>
+            <Pressable style={styles.menuItem}>
               <Text style={styles.menuItemText}>About (coming soon)</Text>
             </Pressable>
 
@@ -143,7 +200,6 @@ export default function HeaderMenuButton({ onOpenChange }: Props) {
               <Text style={styles.signOutText}>Sign out</Text>
             </Pressable>
 
-            {/* Litt luft nederst */}
             <View style={{ height: Math.max(insets.bottom, 16) }} />
           </Animated.View>
         </View>
@@ -164,11 +220,6 @@ const styles = StyleSheet.create({
   modalRoot: {
     flex: 1,
     flexDirection: "row",
-  },
-
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.25)",
   },
 
   drawer: {
@@ -224,16 +275,17 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#F0F0F0",
   },
+
   signOutButton: {
     marginTop: 12,
     paddingVertical: 14,
     alignItems: "center",
     borderRadius: 12,
-    backgroundColor: "#E53935",
+    backgroundColor: "#F0F0F0",
   },
 
   signOutText: {
-    color: "#fff",
+    color: "#111",
     fontWeight: "700",
     fontSize: 14,
   },

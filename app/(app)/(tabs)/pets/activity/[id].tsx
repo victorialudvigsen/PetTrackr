@@ -3,7 +3,7 @@ import * as walkApi from "@/api/walkApi";
 import AppHeader from "@/components/AppHeader";
 import { useAuthSession } from "@/providers/authctx";
 import { PetData } from "@/types/pet";
-import { Feather } from "@expo/vector-icons";
+import { Feather, FontAwesome5 } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -104,7 +104,7 @@ export default function PetActivityPage() {
         <View style={styles.card}>
           <View style={styles.logRow}>
             <View style={styles.iconCircle}>
-              <Feather name="activity" size={22} color="#111" />
+              <FontAwesome5 name="dog" size={22} color="#111" />
             </View>
 
             <View style={{ flex: 1 }}>

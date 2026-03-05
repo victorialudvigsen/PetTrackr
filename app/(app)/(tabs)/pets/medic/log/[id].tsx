@@ -1,17 +1,18 @@
+import * as medicApi from "@/api/medicApi";
 import AppHeader from "@/components/AppHeader";
 import { useAuthSession } from "@/providers/authctx";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
   Pressable,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
 } from "react-native";
-
-import * as medicApi from "@/api/medicApi";
 
 export default function LogMedicPage() {
   const router = useRouter();
@@ -21,6 +22,11 @@ export default function LogMedicPage() {
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState("");
   const [note, setNote] = useState("");
+
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [remindAt, setRemindAt] = useState<Date | null>(null);
+  const [showPicker, setShowPicker] = useState(false);
+  const [pickerMode, setPickerMode] = useState<"date" | "time">("date");
 
   async function handleSave() {
     if (!user?.uid || !id) return;
@@ -34,7 +40,14 @@ export default function LogMedicPage() {
       name: name.trim(),
       dosage: dosage.trim(),
       note: note.trim() || undefined,
+      reminderEnabled,
+      remindAt: reminderEnabled ? remindAt : null,
     });
+
+    setName("");
+    setDosage("");
+    setNote("");
+    setReminderEnabled(false);
 
     router.replace({
       pathname: "/pets/medic/[id]",
@@ -80,6 +93,81 @@ export default function LogMedicPage() {
           multiline
         />
 
+        <Text style={styles.label}>Set reminder</Text>
+
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Text style={{ fontSize: 14 }}>Enable reminder</Text>
+          <Switch
+            value={reminderEnabled}
+            onValueChange={(value) => {
+              setReminderEnabled(value);
+              if (!value) setRemindAt(null);
+            }}
+          />
+        </View>
+
+        {reminderEnabled ? (
+          <>
+            <Pressable
+              style={styles.dateButton}
+              onPress={() => setShowPicker(true)}
+            >
+              <Text style={styles.dateButtonText}>
+                {remindAt
+                  ? remindAt.toLocaleDateString() +
+                    " • " +
+                    remindAt.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "Select date & time"}
+              </Text>
+            </Pressable>
+
+            {showPicker && (
+              <DateTimePicker
+                value={remindAt ?? new Date()}
+                mode={pickerMode}
+                display="default"
+                onChange={(event, selectedDate) => {
+                  if (event.type === "dismissed") {
+                    setShowPicker(false);
+                    return;
+                  }
+
+                  if (!selectedDate) return;
+
+                  if (pickerMode === "date") {
+                    // Lagre dato
+                    setRemindAt(selectedDate);
+
+                    // Åpne time picker
+                    setPickerMode("time");
+                    setShowPicker(true);
+                  } else {
+                    // Kombiner dato + klokkeslett
+                    const current = remindAt ?? new Date();
+                    const combined = new Date(current);
+
+                    combined.setHours(selectedDate.getHours());
+                    combined.setMinutes(selectedDate.getMinutes());
+
+                    setRemindAt(combined);
+
+                    setShowPicker(false);
+                    setPickerMode("date");
+                  }
+                }}
+              />
+            )}
+          </>
+        ) : null}
         <Pressable style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveButtonText}>Save Medication</Text>
         </Pressable>
@@ -121,5 +209,16 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "700",
+  },
+  dateButton: {
+    marginTop: 8,
+    backgroundColor: "#F3F0EC",
+    padding: 12,
+    borderRadius: 12,
+  },
+
+  dateButtonText: {
+    fontSize: 14,
+    color: "#111",
   },
 });

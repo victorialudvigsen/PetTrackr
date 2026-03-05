@@ -5,7 +5,7 @@ import { PetData } from "@/types/pet";
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -18,6 +18,47 @@ import {
 
 import * as medicApi from "@/api/medicApi";
 import * as petApi from "@/api/petApi";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+
+import type { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
+import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
+
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+} from "react-native-reanimated";
+
+/**
+ * VIKTIG: Dette må være en komponent (ikke en vanlig funksjon som blir kalt),
+ * fordi vi bruker useAnimatedStyle (en hook).
+ */
+function RightAction({
+  progress,
+  onPress,
+}: {
+  progress: any; // progress er SharedValue<number> fra ReanimatedSwipeable
+  onPress: () => void;
+}) {
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          translateX: interpolate(progress.value, [0, 1], [80, 0]),
+        },
+      ],
+    };
+  });
+
+  return (
+    <Animated.View style={[styles.deleteContainer, animatedStyle]}>
+      <Pressable style={styles.deleteSwipe} onPress={onPress}>
+        <Feather name="trash-2" size={18} color="#fff" />
+        <Text style={styles.deleteText}>Delete</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
 
 export default function MedicPage() {
   const router = useRouter();
@@ -32,6 +73,54 @@ export default function MedicPage() {
 
   const [meds, setMeds] = useState<MedicEntryData[]>([]);
   const [isLoadingMeds, setIsLoadingMeds] = useState(true);
+
+  // RefObject per rad (det Swipeable faktisk forventer)
+  const swipeRefs = useRef<
+    Record<string, React.RefObject<SwipeableMethods | null>>
+  >({});
+  const openRow = useRef<string | null>(null);
+
+  // Henter/initialiserer ref for en rad, én gang per id
+  function getRowRef(rowId: string) {
+    if (!swipeRefs.current[rowId]) {
+      swipeRefs.current[rowId] = React.createRef<SwipeableMethods>();
+    }
+    return swipeRefs.current[rowId];
+  }
+
+  function closeRow(rowId: string) {
+    swipeRefs.current[rowId]?.current?.close();
+  }
+
+  function handleSwipeOpen(rowId: string) {
+    // Lukk forrige hvis en annen åpnes
+    if (openRow.current && openRow.current !== rowId) {
+      closeRow(openRow.current);
+    }
+    openRow.current = rowId;
+  }
+
+  async function handleDelete(entryId: string) {
+    if (!user?.uid || !pet?.id) return;
+
+    Alert.alert(
+      "Delete medication",
+      "Are you sure you want to delete this entry?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            await medicApi.deleteMedicEntry(user.uid, pet.id, entryId);
+
+            const updated = await medicApi.getMedicEntries(user.uid, pet.id);
+            setMeds(updated);
+          },
+        },
+      ],
+    );
+  }
 
   // Henter pet (for navn i header)
   useEffect(() => {
@@ -104,7 +193,7 @@ export default function MedicPage() {
         <View style={styles.card}>
           <View style={styles.logRow}>
             <View style={styles.iconCircle}>
-              <Feather name="plus-square" size={22} color="#111" />
+              <FontAwesome5 name="pills" size={22} color="#111" />
             </View>
 
             <View style={{ flex: 1 }}>
@@ -138,54 +227,89 @@ export default function MedicPage() {
           ) : meds.length === 0 ? (
             <Text style={styles.emptyText}>No medication logged yet.</Text>
           ) : (
-            meds.slice(0, 10).map((entry) => (
-              <View key={entry.id} style={styles.row}>
-                <View style={styles.rowLeft}>
-                  <View style={styles.rowIconWrap}>
-                    <Feather name="heart" size={16} color="#111" />
-                  </View>
+            meds.slice(0, 10).map((entry) => {
+              const date = entry.createdAt?.toDate?.() ?? new Date();
+              const rowRef = getRowRef(entry.id);
 
-                  <View>
-                    <Text style={styles.rowText}>
-                      {entry.name} – {entry.dosage}
-                    </Text>
-                  </View>
-                </View>
+              return (
+                <Swipeable
+                  key={entry.id}
+                  ref={rowRef}
+                  friction={2}
+                  rightThreshold={40}
+                  overshootRight={false}
+                  renderRightActions={(progress) => (
+                    <RightAction
+                      progress={progress}
+                      onPress={() => {
+                        // Lukk raden før alert (ser mer “pro” ut)
+                        closeRow(entry.id);
+                        handleDelete(entry.id);
+                      }}
+                    />
+                  )}
+                  onSwipeableOpen={(direction) => {
+                    // denne signaturen matcher ReanimatedSwipeable typings
+                    handleSwipeOpen(entry.id);
 
-                <Pressable
-                  onPress={() => {
-                    Alert.alert(
-                      "Delete medication",
-                      "Are you sure you want to delete this entry?",
-                      [
-                        { text: "Cancel", style: "cancel" },
-                        {
-                          text: "Delete",
-                          style: "destructive",
-                          onPress: async () => {
-                            if (!user?.uid || !pet?.id) return;
-
-                            await medicApi.deleteMedicEntry(
-                              user.uid,
-                              pet.id,
-                              entry.id,
-                            );
-
-                            const updated = await medicApi.getMedicEntries(
-                              user.uid,
-                              pet.id,
-                            );
-                            setMeds(updated);
-                          },
-                        },
-                      ],
-                    );
+                    // FULL SWIPE = DELETE (men fortsatt Alert)
+                    // For høyre-actions (swipe til venstre) er direction vanligvis "right"
+                    if (direction === "right") {
+                      // lukk før alert så det ikke blir hengende
+                      closeRow(entry.id);
+                      handleDelete(entry.id);
+                    }
+                  }}
+                  onSwipeableClose={() => {
+                    if (openRow.current === entry.id) {
+                      openRow.current = null;
+                    }
                   }}
                 >
-                  <Feather name="trash-2" size={18} color="#B00020" />
-                </Pressable>
-              </View>
-            ))
+                  <View style={styles.row}>
+                    <View style={styles.rowLeft}>
+                      <View style={styles.rowIconWrap}>
+                        <AntDesign
+                          name="medicine-box"
+                          size={16}
+                          color="black"
+                        />
+                      </View>
+
+                      <View>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 6,
+                          }}
+                        >
+                          <Text style={styles.rowText}>
+                            {entry.name} – {entry.dosage}
+                          </Text>
+
+                          {entry.reminderEnabled ? (
+                            <Feather name="bell" size={14} color="#666" />
+                          ) : null}
+                        </View>
+
+                        {entry.note ? (
+                          <Text style={styles.notes}>{entry.note}</Text>
+                        ) : null}
+
+                        <Text style={styles.dateText}>
+                          {date.toLocaleDateString()} •{" "}
+                          {date.toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </Swipeable>
+              );
+            })
           )}
         </View>
 
@@ -305,5 +429,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     color: "#111",
+  },
+  notes: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 2,
+  },
+  dateText: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 2,
+  },
+
+  // Swipe delete styles
+  deleteContainer: {
+    justifyContent: "center",
+    alignItems: "flex-end",
+    width: 90,
+  },
+  deleteSwipe: {
+    backgroundColor: "#B00020",
+    width: 80,
+    height: "85%",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 12,
+    marginRight: 6,
+  },
+  deleteText: {
+    color: "#fff",
+    fontSize: 12,
+    marginTop: 4,
   },
 });

@@ -20,7 +20,13 @@ function medsCollection(userId: string, petId: string) {
 export async function addMedicEntry(
   userId: string,
   petId: string,
-  data: { name: string; dosage: string; note?: string },
+  data: {
+    name: string;
+    dosage: string;
+    note?: string;
+    remindAt?: Date | null;
+    reminderEnabled?: boolean;
+  },
 ) {
   try {
     const ref = await addDoc(medsCollection(userId, petId), {
@@ -29,8 +35,9 @@ export async function addMedicEntry(
       note: data.note ?? null,
       createdAt: serverTimestamp(),
 
-      // klar for reminder senere
-      scheduledFor: null,
+      // Reminder (lagres bare hvis sendt inn)
+      reminderEnabled: data.reminderEnabled ?? false,
+      remindAt: data.remindAt ?? null,
     });
 
     return ref.id;

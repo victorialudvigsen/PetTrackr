@@ -9,5 +9,6 @@ export type MedicEntryData = {
 
   createdAt?: Timestamp | null;
 
-  scheduledFor?: Timestamp | null;
+  remindAt?: Timestamp | null;
+  reminderEnabled?: boolean;
 };
