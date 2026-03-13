@@ -2,17 +2,14 @@ import * as petApi from "@/api/petApi";
 import * as walkApi from "@/api/walkApi";
 import AppHeader from "@/components/AppHeader";
 import { useAuthSession } from "@/providers/authctx";
+import { buttonStyles } from "@/styles/buttonStyles";
+import { inputStyles } from "@/styles/inputStyles";
+import { layoutStyles } from "@/styles/layoutStyles";
+import { textStyles } from "@/styles/textStyles";
 import { PetData } from "@/types/pet";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import {
-  Alert,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
 
 export default function LogWalkPage() {
   const router = useRouter();
@@ -40,7 +37,7 @@ export default function LogWalkPage() {
   }, [user?.uid, id]);
 
   return (
-    <View style={styles.screen}>
+    <View style={layoutStyles.screen}>
       <AppHeader
         title={pet ? `Log Walk – ${pet.name}` : "Log Walk"}
         onBack={() =>
@@ -51,12 +48,12 @@ export default function LogWalkPage() {
         }
       />
 
-      <View style={styles.content}>
+      <View style={layoutStyles.content}>
         {/* Duration input */}
-        <Text style={styles.label}>Duration (minutes)</Text>
+        <Text style={textStyles.rowText}>Duration (minutes)</Text>
 
         <TextInput
-          style={styles.input}
+          style={inputStyles.input}
           value={duration}
           onChangeText={setDuration}
           keyboardType="numeric"
@@ -65,7 +62,7 @@ export default function LogWalkPage() {
 
         {/* Save button */}
         <Pressable
-          style={[styles.saveButton, { opacity: isSaving ? 0.6 : 1 }]}
+          style={[buttonStyles.saveButton, { opacity: isSaving ? 0.6 : 1 }]}
           disabled={isSaving}
           onPress={async () => {
             if (!user?.uid || !id) return;
@@ -95,7 +92,7 @@ export default function LogWalkPage() {
             }
           }}
         >
-          <Text style={styles.saveButtonText}>
+          <Text style={buttonStyles.saveButtonText}>
             {isSaving ? "Saving..." : "Save Walk"}
           </Text>
         </Pressable>
@@ -103,44 +100,3 @@ export default function LogWalkPage() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#F6F2EE",
-  },
-
-  content: {
-    padding: 16,
-    gap: 18,
-  },
-
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#111",
-  },
-
-  input: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 14,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: "#E6E6E6",
-  },
-
-  saveButton: {
-    backgroundColor: "#2B6DEB",
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: "center",
-    marginTop: 10,
-  },
-
-  saveButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-});

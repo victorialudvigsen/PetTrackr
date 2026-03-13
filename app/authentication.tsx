@@ -1,4 +1,7 @@
 import { useAuthSession } from "@/providers/authctx";
+import { colors } from "@/styles/colors";
+import { inputStyles } from "@/styles/inputStyles";
+import { textStyles } from "@/styles/textStyles";
 import React, { useState } from "react";
 import {
   Alert,
@@ -75,7 +78,8 @@ export default function AuthenticationPage() {
       <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
         <View style={styles.mainContainer}>
           <Text style={styles.mainTitle}>PetTrackr</Text>
-          <Text style={styles.title}>
+          <Text style={[{ fontSize: 30 }, { marginBottom: 10 }]}>🐾</Text>
+          <Text style={[textStyles.pageTitle, { marginBottom: 16 }]}>
             {isRegistering ? "Register" : "Sign in"}
           </Text>
 
@@ -84,7 +88,7 @@ export default function AuthenticationPage() {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Username</Text>
               <TextInput
-                style={styles.input}
+                style={inputStyles.input}
                 placeholder="Username"
                 value={userName}
                 onChangeText={setUserName}
@@ -96,7 +100,7 @@ export default function AuthenticationPage() {
           <View style={styles.inputContainer}>
             <Text style={styles.label}>E-mail</Text>
             <TextInput
-              style={styles.input}
+              style={inputStyles.input}
               placeholder="E-mail"
               keyboardType="email-address"
               value={email}
@@ -108,7 +112,7 @@ export default function AuthenticationPage() {
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Password</Text>
             <TextInput
-              style={styles.input}
+              style={inputStyles.input}
               placeholder="Password"
               secureTextEntry
               value={password}
@@ -156,11 +160,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     width: "100%",
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 24,
-  },
+
   inputContainer: {
     width: "100%",
     marginBottom: 12,
@@ -169,13 +169,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 4,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    padding: 10,
-    fontSize: 16,
-  },
+
   mainButton: {
     backgroundColor: "#007AFF",
     padding: 14,
@@ -198,6 +192,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "700",
     marginBottom: 12,
-    color: "#111",
+    color: colors.textPrimary,
   },
 });

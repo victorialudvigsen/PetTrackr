@@ -3,6 +3,7 @@ import * as petApi from "@/api/petApi";
 import AppHeader from "@/components/AppHeader";
 import SwipeDeleteRow from "@/components/SwipeDeleteRow";
 import { useAuthSession } from "@/providers/authctx";
+import { buttonStyles } from "@/styles/buttonStyles";
 import { cardStyles } from "@/styles/cardStyles";
 import { layoutStyles } from "@/styles/layoutStyles";
 import { rowStyles } from "@/styles/rowStyles";
@@ -135,7 +136,7 @@ export default function FoodPage() {
         {/* LOG FOOD CARD */}
         <View style={cardStyles.card}>
           <View style={rowStyles.logRow}>
-            <View style={rowStyles.iconCircle}>
+            <View style={buttonStyles.iconCircle}>
               <Ionicons name="fast-food-sharp" size={22} color="black" />
             </View>
 
@@ -147,7 +148,7 @@ export default function FoodPage() {
             </View>
 
             <Pressable
-              style={rowStyles.addButton}
+              style={buttonStyles.addButton}
               onPress={() =>
                 router.push({
                   pathname: "/pets/food/log/[id]",

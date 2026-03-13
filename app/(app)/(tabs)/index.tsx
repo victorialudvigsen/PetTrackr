@@ -4,6 +4,9 @@ import * as petApi from "@/api/petApi";
 import * as walkApi from "@/api/walkApi";
 import AppHeader from "@/components/AppHeader";
 import { useAuthSession } from "@/providers/authctx";
+import { cardStyles } from "@/styles/cardStyles";
+import { layoutStyles } from "@/styles/layoutStyles";
+import { textStyles } from "@/styles/textStyles";
 import { FoodEntryData } from "@/types/food";
 import { MedicEntryData } from "@/types/medic";
 import { PetData } from "@/types/pet";
@@ -139,7 +142,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <View style={styles.screen}>
+    <View style={layoutStyles.screen}>
       <AppHeader
         title="Home"
         showBack={false}
@@ -148,16 +151,18 @@ export default function HomePage() {
       />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={layoutStyles.content}
         showsVerticalScrollIndicator={false}
       >
         {/* GREETING */}
         <View style={styles.greetingWrap}>
-          <Text style={styles.greetingText}>{greeting},</Text>
-          <Text style={styles.userName}>{localDisplayName ?? "Friend"} 👋</Text>
-          <Text style={styles.subGreeting}>
-            {pets.length} pets • All good today
+          <Text style={[textStyles.pageTitle, { fontSize: 26 }]}>
+            {greeting},
           </Text>
+          <Text style={[textStyles.pageTitle, { fontSize: 26 }]}>
+            {localDisplayName ?? "Friend"} 🐕
+          </Text>
+          <Text style={textStyles.pageSubtitle}>{pets.length} pets</Text>
         </View>
 
         {/* PET SWITCHER */}
@@ -195,7 +200,8 @@ export default function HomePage() {
 
                   <Text
                     style={[
-                      styles.petSwitchName,
+                      textStyles.logSubtitle,
+                      { fontSize: 12 },
                       isActive && styles.petSwitchNameActive,
                     ]}
                     numberOfLines={1}
@@ -212,7 +218,7 @@ export default function HomePage() {
         {activePet && (
           <Pressable
             style={({ pressed }) => [
-              styles.card,
+              cardStyles.card,
               { opacity: pressed ? 0.85 : 1 },
             ]}
             onPress={() =>
@@ -325,9 +331,9 @@ export default function HomePage() {
         )}
 
         {/* TODAY CARD */}
-        <View style={styles.card}>
+        <View style={cardStyles.card}>
           <Text style={styles.sectionTitle}>Today</Text>
-          <View style={styles.divider} />
+          <View style={cardStyles.divider} />
 
           {nextReminder ? (
             <Text style={styles.todayText}>
@@ -340,14 +346,15 @@ export default function HomePage() {
           ) : (
             <Text style={styles.todayText}>• No medication reminders</Text>
           )}
-          <Text style={styles.todayText}>• No vet visits today</Text>
-          <Text style={styles.todayText}>• Everything looks good</Text>
+          <Text style={styles.todayText}>
+            • No vet visits today (Coming soon)
+          </Text>
         </View>
 
         {/* RECENT ACTIVITY */}
-        <View style={styles.card}>
+        <View style={cardStyles.card}>
           <Text style={styles.sectionTitle}>Recent Activity</Text>
-          <View style={styles.divider} />
+          <View style={cardStyles.divider} />
 
           {latestWalk ? (
             <Text style={styles.todayText}>
@@ -376,38 +383,9 @@ export default function HomePage() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#F6F2EE",
-  },
-
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 0,
-    gap: 16,
-  },
-
   greetingWrap: {
     marginTop: 10,
     marginBottom: 10,
-  },
-
-  greetingText: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: "#111",
-  },
-
-  userName: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: "#111",
-  },
-
-  subGreeting: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 4,
   },
 
   /* PET SWITCHER */
@@ -440,26 +418,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#3E3E3E",
   },
 
-  petSwitchName: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 6,
-  },
-
   petSwitchNameActive: {
     color: "#111",
     fontWeight: "700",
-  },
-
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
   },
 
   petImage: {
@@ -517,12 +478,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#111",
     marginBottom: 8,
-  },
-
-  divider: {
-    height: 1,
-    backgroundColor: "#EDEDED",
-    marginBottom: 10,
   },
 
   todayText: {

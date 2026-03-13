@@ -3,6 +3,7 @@ import * as walkApi from "@/api/walkApi";
 import AppHeader from "@/components/AppHeader";
 import SwipeDeleteRow from "@/components/SwipeDeleteRow";
 import { useAuthSession } from "@/providers/authctx";
+import { buttonStyles } from "@/styles/buttonStyles";
 import { cardStyles } from "@/styles/cardStyles";
 import { layoutStyles } from "@/styles/layoutStyles";
 import { rowStyles } from "@/styles/rowStyles";
@@ -129,7 +130,7 @@ export default function PetActivityPage() {
         {/* LOG WALK CARD */}
         <View style={cardStyles.card}>
           <View style={rowStyles.logRow}>
-            <View style={rowStyles.iconCircle}>
+            <View style={buttonStyles.iconCircle}>
               <FontAwesome5 name="dog" size={22} color="#111" />
             </View>
 
@@ -141,7 +142,7 @@ export default function PetActivityPage() {
             </View>
 
             <Pressable
-              style={rowStyles.addButton}
+              style={buttonStyles.addButton}
               onPress={() =>
                 router.push({
                   pathname: "/pets/activity/log/[id]",

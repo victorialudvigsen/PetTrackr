@@ -6,7 +6,6 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -14,6 +13,10 @@ import {
 
 import * as foodApi from "@/api/foodApi";
 import * as petApi from "@/api/petApi";
+import { buttonStyles } from "@/styles/buttonStyles";
+import { inputStyles } from "@/styles/inputStyles";
+import { layoutStyles } from "@/styles/layoutStyles";
+import { textStyles } from "@/styles/textStyles";
 
 export default function LogFoodPage() {
   const router = useRouter();
@@ -40,7 +43,7 @@ export default function LogFoodPage() {
 
   if (isLoading || !pet) {
     return (
-      <View style={styles.center}>
+      <View style={layoutStyles.center}>
         <ActivityIndicator />
         <Text style={{ marginTop: 8 }}>Loading...</Text>
       </View>
@@ -48,7 +51,7 @@ export default function LogFoodPage() {
   }
 
   return (
-    <View style={styles.screen}>
+    <View style={layoutStyles.screen}>
       <AppHeader
         title={`Log Food – ${pet.name}`}
         onBack={() =>
@@ -59,11 +62,11 @@ export default function LogFoodPage() {
         }
       />
 
-      <View style={styles.content}>
-        <Text style={styles.label}>Grams</Text>
+      <View style={layoutStyles.content}>
+        <Text style={textStyles.rowText}>Grams</Text>
 
         <TextInput
-          style={styles.input}
+          style={inputStyles.input}
           value={grams}
           onChangeText={setGrams}
           keyboardType="numeric"
@@ -71,7 +74,7 @@ export default function LogFoodPage() {
         />
 
         <Pressable
-          style={styles.saveButton}
+          style={buttonStyles.saveButton}
           onPress={async () => {
             if (!user?.uid || !id) return;
 
@@ -95,51 +98,9 @@ export default function LogFoodPage() {
             }
           }}
         >
-          <Text style={styles.saveButtonText}>Save Meal</Text>
+          <Text style={buttonStyles.saveButtonText}>Save Meal</Text>
         </Pressable>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#F6F2EE",
-  },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F6F2EE",
-  },
-  content: {
-    padding: 16,
-    gap: 18,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#111",
-  },
-  input: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 14,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: "#E6E6E6",
-  },
-  saveButton: {
-    backgroundColor: "#2B6DEB",
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  saveButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-});

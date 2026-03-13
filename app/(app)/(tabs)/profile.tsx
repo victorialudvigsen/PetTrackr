@@ -30,6 +30,7 @@ import {
 import * as petApi from "@/api/petApi";
 import AppHeader from "@/components/AppHeader";
 import { cardStyles } from "@/styles/cardStyles";
+import { colors } from "@/styles/colors";
 import { layoutStyles } from "@/styles/layoutStyles";
 import { rowStyles } from "@/styles/rowStyles";
 import { textStyles } from "@/styles/textStyles";
@@ -450,6 +451,7 @@ export default function ProfilePage() {
 }
 
 const styles = StyleSheet.create({
+  // Profile header
   profileRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -460,26 +462,36 @@ const styles = StyleSheet.create({
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: "#D9D9D9",
   },
   profileTextWrap: {
     flex: 1,
     gap: 4,
   },
 
+  // Card header
   cardHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingBottom: 10,
   },
-
   editLink: {
     fontSize: 14,
     color: "#2B6DEB",
     fontWeight: "600",
   },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  cancelLink: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: "600",
+  },
 
+  // Info rows
   infoRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -493,9 +505,10 @@ const styles = StyleSheet.create({
   infoText: {
     flex: 1,
     fontSize: 14,
-    color: "#111",
+    color: colors.textPrimary,
   },
 
+  // Buttons
   circleIconButton: {
     width: 26,
     height: 26,
@@ -503,10 +516,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#111",
+    borderColor: colors.textPrimary,
     backgroundColor: "transparent",
   },
 
+  // Pets
   petLeft: {
     flexDirection: "row",
     alignItems: "center",
@@ -518,7 +532,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#D9D9D9",
   },
   petAvatarImg: {
     width: 40,
@@ -530,25 +543,16 @@ const styles = StyleSheet.create({
     gap: 2,
   },
 
+  // Form
   input: {
     flex: 1,
     fontSize: 14,
-    color: "#111",
+    color: colors.textPrimary,
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderWidth: 1,
-    borderColor: "#E6E6E6",
+    borderColor: colors.border,
     borderRadius: 10,
-    backgroundColor: "#fff",
-  },
-  headerActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  cancelLink: {
-    fontSize: 14,
-    color: "#666",
-    fontWeight: "600",
+    backgroundColor: colors.card,
   },
 });
