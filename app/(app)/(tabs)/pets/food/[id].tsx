@@ -1,8 +1,17 @@
+import * as foodApi from "@/api/foodApi";
+import * as petApi from "@/api/petApi";
 import AppHeader from "@/components/AppHeader";
+import SwipeDeleteRow from "@/components/SwipeDeleteRow";
 import { useAuthSession } from "@/providers/authctx";
+import { cardStyles } from "@/styles/cardStyles";
+import { layoutStyles } from "@/styles/layoutStyles";
+import { rowStyles } from "@/styles/rowStyles";
+import { textStyles } from "@/styles/textStyles";
+import { FoodEntryData } from "@/types/food";
 import { PetData } from "@/types/pet";
 import { Feather } from "@expo/vector-icons";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -11,15 +20,9 @@ import {
   Alert,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from "react-native";
-
-import * as foodApi from "@/api/foodApi";
-import * as petApi from "@/api/petApi";
-import { FoodEntryData } from "@/types/food";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 export default function FoodPage() {
   const router = useRouter();
@@ -27,6 +30,7 @@ export default function FoodPage() {
     id: string;
     from?: string;
   }>();
+
   const { user } = useAuthSession();
 
   const [pet, setPet] = useState<PetData | null>(null);
@@ -34,6 +38,28 @@ export default function FoodPage() {
 
   const [foodEntries, setFoodEntries] = useState<FoodEntryData[]>([]);
   const [isLoadingFood, setIsLoadingFood] = useState(true);
+
+  /* -------- DELETE FUNCTION -------- */
+
+  async function handleDelete(entryId: string) {
+    if (!user?.uid || !pet?.id) return;
+
+    Alert.alert("Delete meal", "Are you sure you want to delete this meal?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          await foodApi.deleteFoodEntry(user.uid, pet.id, entryId);
+
+          const updated = await foodApi.getFoodEntries(user.uid, pet.id);
+          setFoodEntries(updated);
+        },
+      },
+    ]);
+  }
+
+  /* -------- FETCH PET + FOOD -------- */
 
   useEffect(() => {
     async function fetchData() {
@@ -55,6 +81,7 @@ export default function FoodPage() {
     fetchData();
   }, [user?.uid, id]);
 
+  /* Oppdaterer listen når siden får fokus igjen */
   useFocusEffect(
     React.useCallback(() => {
       async function fetchFood() {
@@ -70,7 +97,7 @@ export default function FoodPage() {
 
   if (isLoading || !pet) {
     return (
-      <View style={styles.center}>
+      <View style={layoutStyles.center}>
         <ActivityIndicator />
         <Text style={{ marginTop: 8 }}>Loading food...</Text>
       </View>
@@ -78,7 +105,7 @@ export default function FoodPage() {
   }
 
   return (
-    <View style={styles.screen}>
+    <View style={layoutStyles.screen}>
       <AppHeader
         title={pet.name}
         onBack={() => {
@@ -94,36 +121,37 @@ export default function FoodPage() {
       />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={layoutStyles.content}
         showsVerticalScrollIndicator={false}
       >
         {/* TITLE */}
-        <View style={styles.titleWrap}>
-          <Text style={styles.pageTitle}>Food</Text>
-          <Text style={styles.pageSubtitle}>
+        <View style={layoutStyles.titleWrap}>
+          <Text style={textStyles.pageTitle}>Food</Text>
+          <Text style={textStyles.pageSubtitle}>
             Track food and additional candy
           </Text>
         </View>
+
         {/* LOG FOOD CARD */}
-        <View style={styles.card}>
-          <View style={styles.logRow}>
-            <View style={styles.iconCircle}>
+        <View style={cardStyles.card}>
+          <View style={rowStyles.logRow}>
+            <View style={rowStyles.iconCircle}>
               <Ionicons name="fast-food-sharp" size={22} color="black" />
             </View>
 
             <View style={{ flex: 1 }}>
-              <Text style={styles.logTitle}>Log food</Text>
-              <Text style={styles.logSubtitle}>
+              <Text style={textStyles.logTitle}>Log food</Text>
+              <Text style={textStyles.logSubtitle}>
                 Record grams and track meals
               </Text>
             </View>
 
             <Pressable
-              style={styles.addButton}
+              style={rowStyles.addButton}
               onPress={() =>
                 router.push({
                   pathname: "/pets/food/log/[id]",
-                  params: { id }, // petId
+                  params: { id },
                 })
               }
             >
@@ -133,62 +161,34 @@ export default function FoodPage() {
         </View>
 
         {/* RECENT MEALS */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Recent meals</Text>
-          <View style={styles.divider} />
+        <View style={cardStyles.card}>
+          <Text style={textStyles.sectionTitle}>Recent meals</Text>
+          <View style={cardStyles.divider} />
 
           {isLoadingFood ? (
-            <Text style={styles.emptyText}>Loading meals...</Text>
+            <Text style={textStyles.emptyText}>Loading meals...</Text>
           ) : foodEntries.length === 0 ? (
-            <Text style={styles.emptyText}>No meals logged yet.</Text>
+            <Text style={textStyles.emptyText}>No meals logged yet.</Text>
           ) : (
             foodEntries.slice(0, 10).map((entry) => (
-              <View key={entry.id} style={styles.row}>
-                <View style={styles.rowLeft}>
-                  <View style={styles.rowIconWrap}>
-                    <MaterialCommunityIcons
-                      name="food-steak"
-                      size={16}
-                      color="black"
-                    />
+              <SwipeDeleteRow
+                key={entry.id}
+                onDelete={() => handleDelete(entry.id)}
+              >
+                <View style={rowStyles.row}>
+                  <View style={rowStyles.rowLeft}>
+                    <View style={rowStyles.rowIconWrap}>
+                      <MaterialCommunityIcons
+                        name="food-steak"
+                        size={16}
+                        color="black"
+                      />
+                    </View>
+
+                    <Text style={textStyles.rowText}>{entry.grams} g</Text>
                   </View>
-                  <Text style={styles.rowText}>{entry.grams} g</Text>
                 </View>
-
-                <Pressable
-                  onPress={() => {
-                    Alert.alert(
-                      "Delete meal",
-                      "Are you sure you want to delete this meal?",
-                      [
-                        { text: "Cancel", style: "cancel" },
-                        {
-                          text: "Delete",
-                          style: "destructive",
-                          onPress: async () => {
-                            if (!user?.uid || !pet?.id) return;
-
-                            await foodApi.deleteFoodEntry(
-                              user.uid,
-                              pet.id,
-                              entry.id,
-                            );
-
-                            // Oppdater listen etter sletting
-                            const updated = await foodApi.getFoodEntries(
-                              user.uid,
-                              pet.id,
-                            );
-                            setFoodEntries(updated);
-                          },
-                        },
-                      ],
-                    );
-                  }}
-                >
-                  <Feather name="trash-2" size={18} color="#B00020" />
-                </Pressable>
-              </View>
+              </SwipeDeleteRow>
             ))
           )}
         </View>
@@ -198,128 +198,3 @@ export default function FoodPage() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#F6F2EE",
-  },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F6F2EE",
-  },
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    gap: 14,
-    paddingBottom: 20,
-  },
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
-  },
-
-  logRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#F3F0EC",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111",
-  },
-  logSubtitle: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 2,
-  },
-  addButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.9)",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#E6E6E6",
-  },
-
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111",
-    paddingBottom: 10,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#EDEDED",
-    marginBottom: 10,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
-    paddingVertical: 14,
-  },
-
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-  },
-  rowLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  rowIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: "#F3F0EC",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  rowText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111",
-  },
-  rowRightText: {
-    fontSize: 12,
-    color: "#666",
-  },
-  titleWrap: {
-    marginTop: 8,
-  },
-
-  pageTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#111",
-  },
-
-  pageSubtitle: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 4,
-  },
-});

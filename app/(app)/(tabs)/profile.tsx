@@ -29,6 +29,10 @@ import {
 
 import * as petApi from "@/api/petApi";
 import AppHeader from "@/components/AppHeader";
+import { cardStyles } from "@/styles/cardStyles";
+import { layoutStyles } from "@/styles/layoutStyles";
+import { rowStyles } from "@/styles/rowStyles";
+import { textStyles } from "@/styles/textStyles";
 import { PetData } from "@/types/pet";
 import { useFocusEffect } from "@react-navigation/native";
 
@@ -108,17 +112,17 @@ export default function ProfilePage() {
   );
 
   return (
-    <View style={styles.screen}>
+    <View style={layoutStyles.screen}>
       {/* HEADER */}
       <AppHeader title="Profile" onBack={() => router.replace("/")} />
 
       {/* CONTENT (SCROLL) */}
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={layoutStyles.content}
         showsVerticalScrollIndicator={false}
       >
         {/* TOP CARD */}
-        <View style={styles.card}>
+        <View style={cardStyles.card}>
           <View style={styles.profileRow}>
             <ProfilePicture
               imageUri={profileImageUri}
@@ -154,10 +158,10 @@ export default function ProfilePage() {
             />
 
             <View style={styles.profileTextWrap}>
-              <Text style={styles.profileName} numberOfLines={1}>
+              <Text style={textStyles.logTitle} numberOfLines={1}>
                 {localDisplayName}
               </Text>
-              <Text style={styles.profileEmail} numberOfLines={1}>
+              <Text style={textStyles.pageSubtitle} numberOfLines={1}>
                 {email}
               </Text>
             </View>
@@ -165,9 +169,9 @@ export default function ProfilePage() {
         </View>
 
         {/* USER INFORMATION CARD */}
-        <View style={styles.card}>
+        <View style={cardStyles.card}>
           <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardTitle}>User Information</Text>
+            <Text style={textStyles.sectionTitle}>User Information</Text>
 
             {/* Høyre side: Avbryt + Save/Edit */}
             <View style={styles.headerActions}>
@@ -282,7 +286,7 @@ export default function ProfilePage() {
             </View>
           </View>
 
-          <View style={styles.divider} />
+          <View style={cardStyles.divider} />
 
           {/* Rows */}
           {/* Name */}
@@ -305,7 +309,7 @@ export default function ProfilePage() {
             )}
           </View>
 
-          <View style={styles.rowDivider} />
+          <View style={cardStyles.divider} />
 
           {/* Email */}
           <View style={styles.infoRow}>
@@ -332,7 +336,7 @@ export default function ProfilePage() {
           {/* Password - kun i edit-modus */}
           {isEditingUserInfo && (
             <>
-              <View style={styles.rowDivider} />
+              <View style={cardStyles.divider} />
 
               <View style={styles.infoRow}>
                 <View style={styles.infoIconWrap}>
@@ -350,7 +354,7 @@ export default function ProfilePage() {
             </>
           )}
 
-          <View style={styles.rowDivider} />
+          <View style={cardStyles.divider} />
 
           {/* Phone */}
           <View style={styles.infoRow}>
@@ -375,9 +379,9 @@ export default function ProfilePage() {
         </View>
 
         {/* MY PETS CARD */}
-        <View style={styles.card}>
+        <View style={cardStyles.card}>
           <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardTitle}>My Pets</Text>
+            <Text style={textStyles.sectionTitle}>My Pets</Text>
 
             <Pressable
               style={styles.circleIconButton}
@@ -387,13 +391,13 @@ export default function ProfilePage() {
             </Pressable>
           </View>
 
-          <View style={styles.divider} />
+          <View style={cardStyles.divider} />
 
           {/* Hvis ingen pets */}
           {isLoadingPets ? (
-            <Text style={styles.emptyText}>Loading pets...</Text>
+            <Text style={textStyles.emptyText}>Loading pets...</Text>
           ) : pets.length === 0 ? (
-            <Text style={styles.emptyText}>
+            <Text style={textStyles.emptyText}>
               You haven’t added any pets yet.
             </Text>
           ) : (
@@ -403,7 +407,7 @@ export default function ProfilePage() {
               return (
                 <View key={pet.id}>
                   <Pressable
-                    style={styles.petRow}
+                    style={rowStyles.row}
                     onPress={() =>
                       router.push({
                         pathname: "/pets/[id]",
@@ -423,15 +427,15 @@ export default function ProfilePage() {
                       )}
 
                       <View style={styles.petTextWrap}>
-                        <Text style={styles.petName}>{pet.name}</Text>
-                        <Text style={styles.petType}>{pet.type}</Text>
+                        <Text style={textStyles.sectionTitle}>{pet.name}</Text>
+                        <Text style={textStyles.logSubtitle}>{pet.type}</Text>
                       </View>
                     </View>
 
                     <Feather name="chevron-right" size={22} color="#111" />
                   </Pressable>
 
-                  {!isLast && <View style={styles.petRowDivider} />}
+                  {!isLast && <View style={cardStyles.divider} />}
                 </View>
               );
             })
@@ -446,43 +450,6 @@ export default function ProfilePage() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#F6F2EE",
-  },
-
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#111",
-    marginLeft: 6,
-  },
-
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    gap: 14,
-    paddingBottom: 20,
-  },
-
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
-  },
-
   profileRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -499,15 +466,6 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 4,
   },
-  profileName: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#111",
-  },
-  profileEmail: {
-    fontSize: 14,
-    color: "#444",
-  },
 
   cardHeaderRow: {
     flexDirection: "row",
@@ -515,21 +473,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingBottom: 10,
   },
-  cardTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111",
-  },
+
   editLink: {
     fontSize: 14,
     color: "#2B6DEB",
     fontWeight: "600",
-  },
-
-  divider: {
-    height: 1,
-    backgroundColor: "#EDEDED",
-    marginBottom: 8,
   },
 
   infoRow: {
@@ -547,10 +495,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#111",
   },
-  rowDivider: {
-    height: 1,
-    backgroundColor: "#F0F0F0",
-  },
 
   circleIconButton: {
     width: 26,
@@ -563,12 +507,6 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
 
-  petRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-  },
   petLeft: {
     flexDirection: "row",
     alignItems: "center",
@@ -591,31 +529,6 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-  petName: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111",
-  },
-  petType: {
-    fontSize: 12,
-    color: "#666",
-  },
-  petRowDivider: {
-    height: 1,
-    backgroundColor: "#F0F0F0",
-  },
-
-  logoutButton: {
-    backgroundColor: "#E53935",
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  logoutButtonText: {
-    color: "white",
-    fontWeight: "700",
-    fontSize: 16,
-  },
 
   input: {
     flex: 1,
@@ -637,11 +550,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     fontWeight: "600",
-  },
-  emptyText: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
-    paddingVertical: 16,
   },
 });

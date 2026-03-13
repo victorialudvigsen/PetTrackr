@@ -1,7 +1,12 @@
 import * as petApi from "@/api/petApi";
 import * as walkApi from "@/api/walkApi";
 import AppHeader from "@/components/AppHeader";
+import SwipeDeleteRow from "@/components/SwipeDeleteRow";
 import { useAuthSession } from "@/providers/authctx";
+import { cardStyles } from "@/styles/cardStyles";
+import { layoutStyles } from "@/styles/layoutStyles";
+import { rowStyles } from "@/styles/rowStyles";
+import { textStyles } from "@/styles/textStyles";
 import { PetData } from "@/types/pet";
 import { Feather, FontAwesome5 } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
@@ -12,7 +17,6 @@ import {
   Alert,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from "react-native";
@@ -31,6 +35,27 @@ export default function PetActivityPage() {
   const [walks, setWalks] = useState<any[]>([]);
   const [isLoadingWalks, setIsLoadingWalks] = useState(true);
 
+  /* -------- DELETE WALK -------- */
+
+  async function handleDelete(walkId: string) {
+    if (!user?.uid || !pet?.id) return;
+
+    Alert.alert("Delete walk", "Are you sure you want to delete this walk?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          await walkApi.deleteWalk(user.uid, pet.id, walkId);
+
+          /* Oppdaterer listen etter sletting */
+          const updated = await walkApi.getWalks(user.uid, pet.id);
+          setWalks(updated);
+        },
+      },
+    ]);
+  }
+
   // Henter pet for å vise navn i header
   useEffect(() => {
     async function fetchPet() {
@@ -45,6 +70,7 @@ export default function PetActivityPage() {
     fetchPet();
   }, [user?.uid, id]);
 
+  // Henter walks
   useFocusEffect(
     React.useCallback(() => {
       async function fetchWalks() {
@@ -64,7 +90,7 @@ export default function PetActivityPage() {
 
   if (isLoading || !pet) {
     return (
-      <View style={styles.center}>
+      <View style={layoutStyles.center}>
         <ActivityIndicator />
         <Text style={{ marginTop: 8 }}>Loading activity...</Text>
       </View>
@@ -72,7 +98,7 @@ export default function PetActivityPage() {
   }
 
   return (
-    <View style={styles.screen}>
+    <View style={layoutStyles.screen}>
       {/* HEADER */}
       <AppHeader
         title={pet.name}
@@ -89,33 +115,33 @@ export default function PetActivityPage() {
       />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={layoutStyles.content}
         showsVerticalScrollIndicator={false}
       >
         {/* TITLE */}
-        <View style={styles.titleWrap}>
-          <Text style={styles.pageTitle}>Activity</Text>
-          <Text style={styles.pageSubtitle}>
+        <View style={layoutStyles.titleWrap}>
+          <Text style={textStyles.pageTitle}>Activity</Text>
+          <Text style={textStyles.pageSubtitle}>
             Track walks and daily movement
           </Text>
         </View>
 
         {/* LOG WALK CARD */}
-        <View style={styles.card}>
-          <View style={styles.logRow}>
-            <View style={styles.iconCircle}>
+        <View style={cardStyles.card}>
+          <View style={rowStyles.logRow}>
+            <View style={rowStyles.iconCircle}>
               <FontAwesome5 name="dog" size={22} color="#111" />
             </View>
 
             <View style={{ flex: 1 }}>
-              <Text style={styles.logTitle}>Log a walk</Text>
-              <Text style={styles.logSubtitle}>
+              <Text style={textStyles.logTitle}>Log a walk</Text>
+              <Text style={textStyles.logSubtitle}>
                 Record duration and track activity
               </Text>
             </View>
 
             <Pressable
-              style={styles.addButton}
+              style={rowStyles.addButton}
               onPress={() =>
                 router.push({
                   pathname: "/pets/activity/log/[id]",
@@ -129,66 +155,42 @@ export default function PetActivityPage() {
         </View>
 
         {/* RECENT WALKS */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Recent Walks</Text>
-          <View style={styles.divider} />
+        <View style={cardStyles.card}>
+          <Text style={textStyles.sectionTitle}>Recent Walks</Text>
+          <View style={cardStyles.divider} />
 
           {isLoadingWalks ? (
-            <Text style={styles.emptyText}>Loading walks...</Text>
+            <Text style={textStyles.emptyText}>Loading walks...</Text>
           ) : walks.length === 0 ? (
-            <Text style={styles.emptyText}>No walks logged yet.</Text>
+            <Text style={textStyles.emptyText}>No walks logged yet.</Text>
           ) : (
             walks.map((walk) => {
               const date = walk.createdAt?.toDate?.() ?? new Date();
 
               return (
-                <View key={walk.id} style={styles.row}>
-                  <View style={styles.rowLeft}>
-                    <View>
-                      <Text style={styles.rowText}>{walk.duration} min</Text>
-                      <Text style={styles.walkDate}>
-                        {date.toLocaleDateString()} •{" "}
-                        {date.toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </Text>
+                /* SwipeDeleteRow håndterer hele swipe-logikken */
+                <SwipeDeleteRow
+                  key={walk.id}
+                  onDelete={() => handleDelete(walk.id)}
+                >
+                  <View style={rowStyles.row}>
+                    <View style={rowStyles.rowLeft}>
+                      <View>
+                        <Text style={textStyles.rowText}>
+                          {walk.duration} min
+                        </Text>
+
+                        <Text style={textStyles.dateText}>
+                          {date.toLocaleDateString()} •{" "}
+                          {date.toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </Text>
+                      </View>
                     </View>
                   </View>
-
-                  <Pressable
-                    onPress={() => {
-                      Alert.alert(
-                        "Delete walk",
-                        "Are you sure you want to delete this walk?",
-                        [
-                          { text: "Cancel", style: "cancel" },
-                          {
-                            text: "Delete",
-                            style: "destructive",
-                            onPress: async () => {
-                              if (!user?.uid || !pet?.id) return;
-
-                              await walkApi.deleteWalk(
-                                user.uid,
-                                pet.id,
-                                walk.id,
-                              );
-
-                              const updated = await walkApi.getWalks(
-                                user.uid,
-                                pet.id,
-                              );
-                              setWalks(updated);
-                            },
-                          },
-                        ],
-                      );
-                    }}
-                  >
-                    <Feather name="trash-2" size={18} color="#B00020" />
-                  </Pressable>
-                </View>
+                </SwipeDeleteRow>
               );
             })
           )}
@@ -197,152 +199,3 @@ export default function PetActivityPage() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#F6F2EE",
-  },
-
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F6F2EE",
-  },
-
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    gap: 16,
-  },
-
-  titleWrap: {
-    marginTop: 8,
-  },
-
-  pageTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#111",
-  },
-
-  pageSubtitle: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 4,
-  },
-
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
-  },
-
-  logRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-  },
-
-  iconCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#F3F0EC",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  logTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#111",
-  },
-
-  logSubtitle: {
-    fontSize: 13,
-    color: "#666",
-    marginTop: 4,
-  },
-
-  addButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: "#F3F0EC",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111",
-    marginBottom: 8,
-  },
-
-  divider: {
-    height: 1,
-    backgroundColor: "#EDEDED",
-    marginBottom: 10,
-  },
-
-  walkRow: {
-    paddingVertical: 10,
-  },
-
-  walkText: {
-    fontSize: 14,
-    color: "#444",
-  },
-
-  rowDivider: {
-    height: 1,
-    backgroundColor: "#F0F0F0",
-  },
-
-  walkDuration: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#111",
-  },
-
-  walkDate: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 2,
-  },
-
-  emptyText: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
-    paddingVertical: 12,
-  },
-
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-  },
-
-  rowLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    flex: 1,
-  },
-
-  rowText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111",
-  },
-});

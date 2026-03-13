@@ -2,13 +2,17 @@ import * as medicApi from "@/api/medicApi";
 import * as petApi from "@/api/petApi";
 import AppHeader from "@/components/AppHeader";
 import { useAuthSession } from "@/providers/authctx";
+import { cardStyles } from "@/styles/cardStyles";
+import { layoutStyles } from "@/styles/layoutStyles";
+import { rowStyles } from "@/styles/rowStyles";
+import { textStyles } from "@/styles/textStyles";
 import { MedicEntryData } from "@/types/medic";
 import { PetData } from "@/types/pet";
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 export default function RemindersPage() {
   const router = useRouter();
@@ -87,44 +91,44 @@ export default function RemindersPage() {
   );
 
   return (
-    <View style={styles.screen}>
+    <View style={layoutStyles.screen}>
       <AppHeader title="Reminders" onBack={() => router.back()} />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={layoutStyles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Upcoming reminders</Text>
+        <Text style={textStyles.pageTitle}>Upcoming reminders</Text>
 
         {isLoading ? (
-          <View style={styles.card}>
-            <Text style={styles.emptyText}>Loading reminders...</Text>
+          <View style={cardStyles.card}>
+            <Text style={textStyles.emptyText}>Loading reminders...</Text>
           </View>
         ) : (
           reminders.map(({ pet, meds }) => (
-            <View key={pet.id} style={styles.card}>
-              <Text style={styles.sectionTitle}>{pet.name}</Text>
-              <View style={styles.divider} />
+            <View key={pet.id} style={cardStyles.card}>
+              <Text style={textStyles.sectionTitle}>{pet.name}</Text>
+              <View style={cardStyles.divider} />
 
               {meds.length === 0 ? (
-                <Text style={styles.emptyText}>No reminders</Text>
+                <Text style={textStyles.emptyText}>No reminders</Text>
               ) : (
                 meds.map((entry) => {
                   const date = entry.remindAt?.toDate?.() ?? new Date();
 
                   return (
-                    <View key={entry.id} style={styles.row}>
-                      <View style={styles.rowLeft}>
-                        <View style={styles.rowIconWrap}>
+                    <View key={entry.id} style={rowStyles.row}>
+                      <View style={rowStyles.rowLeft}>
+                        <View style={rowStyles.rowIconWrap}>
                           <Feather name="bell" size={16} color="#111" />
                         </View>
 
                         <View>
-                          <Text style={styles.rowText}>
+                          <Text style={textStyles.rowText}>
                             {entry.name} – {entry.dosage}
                           </Text>
 
-                          <Text style={styles.dateText}>
+                          <Text style={textStyles.dateTextLarge}>
                             {formatReminderDate(date)} •{" "}
                             {date.toLocaleTimeString([], {
                               hour: "2-digit",
@@ -146,84 +150,3 @@ export default function RemindersPage() {
     </View>
   );
 }
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#F6F2EE",
-  },
-
-  content: {
-    padding: 16,
-    gap: 16,
-  },
-
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 16,
-    color: "#111",
-  },
-
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
-  },
-
-  emptyText: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111",
-    marginBottom: 8,
-  },
-
-  divider: {
-    height: 1,
-    backgroundColor: "#EDEDED",
-    marginBottom: 10,
-  },
-
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 10,
-  },
-
-  rowLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-
-  rowIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: "#F3F0EC",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  rowText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111",
-  },
-
-  dateText: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 2,
-  },
-});
