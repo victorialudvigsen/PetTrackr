@@ -24,6 +24,7 @@ export default function LogMedicPage() {
   const [showPicker, setShowPicker] = useState(false);
   const [pickerMode, setPickerMode] = useState<"date" | "time">("date");
 
+  /* -------- HANDLE SAVE -------- */
   async function handleSave() {
     if (!user?.uid || !id) return;
 
@@ -140,14 +141,14 @@ export default function LogMedicPage() {
                   if (!selectedDate) return;
 
                   if (pickerMode === "date") {
-                    // Lagre dato
+                    // Lagrer dato
                     setRemindAt(selectedDate);
 
-                    // Åpne time picker
+                    // Åpner time picker
                     setPickerMode("time");
                     setShowPicker(true);
                   } else {
-                    // Kombiner dato + klokkeslett
+                    // Kombinerer dato + klokkeslett
                     const current = remindAt ?? new Date();
                     const combined = new Date(current);
 

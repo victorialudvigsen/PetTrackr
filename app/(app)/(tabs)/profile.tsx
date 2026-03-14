@@ -45,7 +45,7 @@ export default function ProfilePage() {
   const [isUploading, setIsUploading] = useState(false);
   const [phone, setPhone] = useState<string | null>(null);
 
-  // Midlertidig dummy-data for UI
+  // Dummy-data for UI
   const displayName = userNameSession ?? "Ingen navn";
   const email = user?.email ?? "Ingen e-post";
 
@@ -79,7 +79,7 @@ export default function ProfilePage() {
     setIsLoadingPets(false);
   }, [user?.uid]);
 
-  // UseEffect
+  // Henter bruker
   useEffect(() => {
     if (!user?.uid) return;
 
@@ -105,7 +105,7 @@ export default function ProfilePage() {
     setLocalDisplayName(displayName);
   }, [displayName]);
 
-  // Oppdater pets når siden får fokus (f.eks. når du kommer tilbake fra addPet)
+  // Oppdater pets når siden får fokus
   useFocusEffect(
     useCallback(() => {
       loadPets();
@@ -140,17 +140,17 @@ export default function ProfilePage() {
                 try {
                   setIsUploading(true);
 
-                  // 1) Upload til Storage -> får download URL tilbake
+                  // Upload til Storage -> får download URL tilbake
                   const downloadUrl = await uploadProfilePictureToFirebase(
                     uri,
                     user.uid,
                   );
                   if (!downloadUrl) return;
 
-                  // 2) Lagrer URL i Firestore (users/{uid})
+                  // Lagrer URL i Firestore (users/{uid})
                   await editUserAvatarUrl(user.uid, downloadUrl);
 
-                  // 3) Bytter fra lokal uri til ekte URL
+                  // Bytter fra lokal uri til ekte URL
                   setProfileImageUri(downloadUrl);
                 } finally {
                   setIsUploading(false);
@@ -206,50 +206,48 @@ export default function ProfilePage() {
                       : 1,
                 }}
                 onPress={async () => {
-                  // 1) Går INN i edit-modus
+                  // Går inn i edit-modus
                   if (!isEditingUserInfo) {
-                    // Vi går INN i edit-modus: fyller feltene med dagens verdier
                     setEditName(localDisplayName);
                     setEditEmail(email);
                     setEditPhone(phone ?? "");
-                    setEditPassword(""); // alltid tomt av sikkerhet
+                    setEditPassword("");
                     setIsEditingUserInfo(true);
                     return;
                   }
 
-                  // 2) Er i edit-modus og trykker "Lagre"
+                  // Er i edit-modus og trykker "Lagre"
                   if (!user) return;
 
                   setIsSavingUserInfo(true);
 
                   try {
-                    // 1) Navn (Firebase Auth)
+                    // 1Navn (Firebase Auth)
                     const newName = editName.trim();
                     if (newName && newName !== localDisplayName) {
                       await updateUserDisplayName(user, newName);
                       setLocalDisplayName(newName);
                     }
 
-                    // 2) E-post (Firebase Auth)
+                    // E-post (Firebase Auth)
                     const newEmail = editEmail.trim();
                     if (newEmail && newEmail !== email) {
                       await updateUserEmail(user, newEmail);
                     }
 
-                    // 3) Passord (Firebase Auth) - kun hvis brukeren skrev noe
+                    // Passord (Firebase Auth) - kun hvis brukeren skrev noe
                     const newPassword = editPassword.trim();
                     if (newPassword.length > 0) {
                       await updateUserPassword(user, newPassword);
                     }
 
-                    // 4) Telefon (Firestore) - valgfritt
+                    // Telefon (Firestore) - valgfritt
                     const newPhone =
                       editPhone.trim().length > 0 ? editPhone.trim() : null;
 
                     await editUserPhone(user.uid, newPhone);
                     setPhone(newPhone);
 
-                    // Ferdig -> ut av edit-modus
                     setIsEditingUserInfo(false);
 
                     Alert.alert("Success", "Userinformation is updated.");

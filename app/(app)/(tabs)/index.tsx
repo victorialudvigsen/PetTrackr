@@ -388,7 +388,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
-  /* PET SWITCHER */
   petSwitcher: {
     paddingVertical: 6,
     paddingBottom: 12,

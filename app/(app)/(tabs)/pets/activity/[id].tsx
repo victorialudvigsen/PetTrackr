@@ -71,7 +71,7 @@ export default function PetActivityPage() {
     fetchPet();
   }, [user?.uid, id]);
 
-  // Henter walks
+  /* -------- FETCH PET + WALK -------- */
   useFocusEffect(
     React.useCallback(() => {
       async function fetchWalks() {

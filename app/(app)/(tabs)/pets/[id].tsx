@@ -53,19 +53,16 @@ export default function PetDetailPage() {
 
   useFocusEffect(
     React.useCallback(() => {
-      // Når skjermen får fokus: ikke gjør noe
       return () => {
-        // Når skjermen mister fokus (du går til en annen tab/screen):
         setIsEditingPetInfo(false);
 
-        // (valgfritt men anbefalt) reset input-feltene til det som er lagret i pet:
         setEditName(pet?.name ?? "");
         setEditType(pet?.type ?? "");
       };
     }, [pet?.name, pet?.type]),
   );
 
-  // Useeffect
+  // Henter pet
   useEffect(() => {
     fetchPet();
   }, [id, user?.uid]);
@@ -87,7 +84,7 @@ export default function PetDetailPage() {
     );
   }
 
-  // brukt for å disable Save
+  // Disable Save
   const hasPetInfoChanges =
     editName.trim() !== (pet.name ?? "").trim() ||
     editType.trim() !== (pet.type ?? "").trim();
@@ -99,13 +96,13 @@ export default function PetDetailPage() {
     const uri = await pickProfilePicture();
     if (!uri) return;
 
-    // 1) Vis nytt bilde med én gang (lokal preview)
+    // Vis nytt bilde med én gang
     setPet((prev) => (prev ? { ...prev, photoUrl: uri } : prev));
 
     setIsUploadingPhoto(true);
 
     try {
-      // 2) Upload (overskriver pets/{uid}/{petId}.jpg)
+      // Upload (overskriver pets/{uid}/{petId}.jpg)
       const downloadUrl = await uploadPetPictureToFirebase(
         uri,
         user.uid,
@@ -117,10 +114,10 @@ export default function PetDetailPage() {
         return;
       }
 
-      // 3) Lagre URL i Firestore
+      // Lagrer URL i Firestore
       await petApi.setPetPhotoUrl(user.uid, pet.id, downloadUrl);
 
-      // 4) Oppdater UI med ekte url (så det fungerer etter refresh også)
+      // Oppdaterer UI med ekte url
       setPet((prev) => (prev ? { ...prev, photoUrl: downloadUrl } : prev));
     } catch (e) {
       console.log("Update pet photo failed:", e);
@@ -147,13 +144,13 @@ export default function PetDetailPage() {
     setIsSavingPetInfo(true);
 
     try {
-      // Oppdater Firestore (users/{uid}/pets/{petId})
+      // Oppdaterer Firestore (users/{uid}/pets/{petId})
       await petApi.updatePetBasicInfo(user.uid, pet.id, {
         name: cleanName,
         type: cleanType,
       });
 
-      // Oppdater UI direkte
+      // Oppdaterer UI direkte
       setPet((prev) =>
         prev ? { ...prev, name: cleanName, type: cleanType } : prev,
       );
@@ -163,14 +160,14 @@ export default function PetDetailPage() {
     } catch (e) {
       console.log("Update pet info failed:", e);
       Alert.alert("Feil", "Kunne ikke lagre endringene. Prøv igjen.");
-      // Rull tilbake til databasen (trygt)
+
       await fetchPet();
     } finally {
       setIsSavingPetInfo(false);
     }
   }
 
-  // Delete pet
+  /* -------- DELETE PET -------- */
   async function onDeletePet() {
     if (!user?.uid) return;
     if (!pet) return;
@@ -188,7 +185,6 @@ export default function PetDetailPage() {
             try {
               await petApi.deletePet(user.uid, pet.id);
 
-              // Viktig: gå tilbake til Profile etter slett
               router.replace("/profile");
             } catch (e) {
               console.log("Delete pet failed:", e);
@@ -202,7 +198,6 @@ export default function PetDetailPage() {
     );
   }
 
-  //** JSX **/
   return (
     <View style={styles.screen}>
       {/* HEADER */}
@@ -225,7 +220,7 @@ export default function PetDetailPage() {
         {/* "BILDEFELT" (hero) */}
         <View style={styles.heroCard}>
           <View style={styles.heroImageWrap}>
-            {/* Foreløpig: viser pet.photoUrl hvis den finnes, ellers en placeholder */}
+            {/* Viser pet.photoUrl hvis den finnes, ellers en placeholder */}
             {pet.photoUrl ? (
               <Image source={{ uri: pet.photoUrl }} style={styles.heroImage} />
             ) : (
@@ -307,7 +302,7 @@ export default function PetDetailPage() {
                       : 1,
                 }}
                 onPress={async () => {
-                  // 1) gå inn i edit-modus
+                  // Går inn i edit-modus
                   if (!isEditingPetInfo) {
                     setEditName(pet.name ?? "");
                     setEditType(pet.type ?? "");
@@ -315,7 +310,6 @@ export default function PetDetailPage() {
                     return;
                   }
 
-                  // 2) vi er i edit-modus -> lagre
                   await onSavePetInfo();
                 }}
               >
@@ -341,7 +335,6 @@ export default function PetDetailPage() {
 
           <View style={styles.divider} />
 
-          {/* Her bruker vi kun feltene vi har nå: name og type */}
           <View style={styles.basicGrid}>
             {/* Name */}
             <View style={styles.basicItem}>
@@ -480,7 +473,7 @@ export default function PetDetailPage() {
           </Pressable>
         </View>
 
-        {/* NEDRE KORT (som i scroll-bildet) */}
+        {/* NEDRE KORT  */}
         <View style={styles.card}>
           <Pressable style={styles.simpleRow} onPress={() => {}}>
             <View style={styles.simpleLeft}>
@@ -549,7 +542,6 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
 
-  // Hero
   heroCard: {
     backgroundColor: "transparent",
   },
@@ -581,7 +573,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  // Card headers
   cardHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -599,7 +590,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  // NEW: samme som på profile.tsx
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
@@ -621,7 +611,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F0F0",
   },
 
-  // Basic info grid
   basicGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -655,7 +644,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // NEW: input style (kopiert fra profile.tsx)
   input: {
     fontSize: 14,
     color: "#111",
@@ -667,7 +655,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
 
-  // Recent activity
   sectionTitle: {
     fontSize: 14,
     fontWeight: "700",
@@ -706,7 +693,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // Simple list (Medical Records / Prescriptions)
   simpleRow: {
     flexDirection: "row",
     alignItems: "center",

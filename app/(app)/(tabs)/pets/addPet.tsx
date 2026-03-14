@@ -40,7 +40,7 @@ export default function AddPetPage() {
     setIsSaving(true);
 
     try {
-      // 1) Lager pet i Firestore
+      // Lager pet i Firestore
       const newPetId = await petApi.createPet(user.uid, {
         name: cleanName,
         type: cleanType,
@@ -51,7 +51,7 @@ export default function AddPetPage() {
         return;
       }
 
-      // 2) Hvis vi har bilde -> upload til Storage + lagre photoUrl på pet
+      // Hvis vi har bilde -> upload til Storage + lagre photoUrl på pet
       if (petImageUri) {
         const downloadUrl = await uploadPetPictureToFirebase(
           petImageUri,

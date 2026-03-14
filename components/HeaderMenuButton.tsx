@@ -56,7 +56,6 @@ export default function HeaderMenuButton({ onOpenChange }: Props) {
 
     progress.setValue(0);
 
-    // Spring gir mer "native" følelse
     Animated.spring(progress, {
       toValue: 1,
       friction: 8,

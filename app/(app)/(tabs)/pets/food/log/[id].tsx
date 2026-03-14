@@ -28,6 +28,7 @@ export default function LogFoodPage() {
 
   const [grams, setGrams] = useState("");
 
+  // Henter riktig pet
   useEffect(() => {
     async function fetchPet() {
       if (!user?.uid || !id) return;

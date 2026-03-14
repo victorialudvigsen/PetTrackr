@@ -47,6 +47,7 @@ export async function uploadProfilePictureToFirebase(
   }
 }
 
+// Laster opp bilder til firebase
 export async function uploadPetPictureToFirebase(
   uri: string,
   userId: string,

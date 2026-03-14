@@ -9,9 +9,9 @@ import {
 } from "react-native";
 
 type Props = {
-  imageUri?: string | null; // URL/uri til bilde
-  size?: number; // størrelse på sirkelen (default 54)
-  onPressEdit: () => void; // hva som skjer når man trykker på edit-ikonet
+  imageUri?: string | null;
+  size?: number;
+  onPressEdit: () => void;
   isLoading?: boolean;
 };
 
