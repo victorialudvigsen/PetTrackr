@@ -10,7 +10,15 @@ export const buttonStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#E6E6E6",
+    borderColor: colors.border,
+  },
+
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
   },
   iconCircle: {
     width: 44,
@@ -21,7 +29,7 @@ export const buttonStyles = StyleSheet.create({
     justifyContent: "center",
   },
   saveButton: {
-    backgroundColor: "#2B6DEB",
+    backgroundColor: colors.button,
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: "center",
@@ -43,5 +51,51 @@ export const buttonStyles = StyleSheet.create({
   dateButtonText: {
     fontSize: 14,
     color: colors.textPrimary,
+  },
+  mainButton: {
+    backgroundColor: colors.button,
+    padding: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 24,
+    width: "100%",
+  },
+  mainButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  signOutButton: {
+    marginTop: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    borderRadius: 12,
+    backgroundColor: colors.button,
+  },
+
+  signOutText: {
+    color: colors.textPrimary,
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  cameraButton: {
+    position: "absolute",
+    right: 12,
+    top: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.75)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surface,
   },
 });

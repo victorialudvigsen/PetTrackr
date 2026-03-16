@@ -1,4 +1,8 @@
 import { useAuthSession } from "@/providers/authctx";
+import { buttonStyles } from "@/styles/buttonStyles";
+import { cardStyles } from "@/styles/cardStyles";
+import { colors } from "@/styles/colors";
+import { textStyles } from "@/styles/textStyles";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { BlurView } from "expo-blur";
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -156,47 +160,51 @@ export default function HeaderMenuButton({ onOpenChange }: Props) {
             ]}
           >
             <View style={styles.drawerHeader}>
-              <Text style={styles.drawerTitle}>Menu</Text>
+              <Text style={[textStyles.sectionTitle, { fontSize: 18 }]}>
+                Menu
+              </Text>
 
               <Pressable
                 onPress={closeMenu}
                 style={({ pressed }) => [
-                  styles.closeButton,
+                  buttonStyles.closeButton,
                   { opacity: pressed ? 0.6 : 1 },
                 ]}
               >
-                <AntDesign name="close" size={18} color="#111" />
+                <AntDesign name="close" size={18} color={colors.button} />
               </Pressable>
             </View>
 
-            <View style={styles.divider} />
+            <View style={cardStyles.divider} />
 
-            <Pressable style={styles.menuItem}>
-              <Text style={styles.menuItemText}>Settings (coming soon)</Text>
+            <Pressable style={{ paddingVertical: 14 }}>
+              <Text style={textStyles.sectionTitle}>
+                Settings (coming soon)
+              </Text>
             </Pressable>
 
-            <View style={styles.itemDivider} />
+            <View style={[cardStyles.divider, { marginBottom: 0 }]} />
 
-            <Pressable style={styles.menuItem}>
-              <Text style={styles.menuItemText}>Help (coming soon)</Text>
+            <Pressable style={{ paddingVertical: 14 }}>
+              <Text style={textStyles.sectionTitle}>Help (coming soon)</Text>
             </Pressable>
 
-            <View style={styles.itemDivider} />
+            <View style={[cardStyles.divider, { marginBottom: 0 }]} />
 
-            <Pressable style={styles.menuItem}>
-              <Text style={styles.menuItemText}>About (coming soon)</Text>
+            <Pressable style={{ paddingVertical: 14 }}>
+              <Text style={textStyles.sectionTitle}>About (coming soon)</Text>
             </Pressable>
 
-            <View style={styles.itemDivider} />
+            <View style={[cardStyles.divider, { marginBottom: 0 }]} />
 
             <Pressable
-              style={styles.signOutButton}
+              style={buttonStyles.signOutButton}
               onPress={() => {
                 closeMenu();
                 signOut();
               }}
             >
-              <Text style={styles.signOutText}>Sign out</Text>
+              <Text style={buttonStyles.signOutText}>Sign out</Text>
             </Pressable>
 
             <View style={{ height: Math.max(insets.bottom, 16) }} />
@@ -237,55 +245,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingBottom: 10,
-  },
-
-  drawerTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#111",
-  },
-
-  closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F3F0EC",
-  },
-
-  divider: {
-    height: 1,
-    backgroundColor: "#EDEDED",
-    marginBottom: 10,
-  },
-
-  menuItem: {
-    paddingVertical: 14,
-  },
-
-  menuItemText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#111",
-  },
-
-  itemDivider: {
-    height: 1,
-    backgroundColor: "#F0F0F0",
-  },
-
-  signOutButton: {
-    marginTop: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-    borderRadius: 12,
-    backgroundColor: "#F0F0F0",
-  },
-
-  signOutText: {
-    color: "#111",
-    fontWeight: "700",
-    fontSize: 14,
   },
 });

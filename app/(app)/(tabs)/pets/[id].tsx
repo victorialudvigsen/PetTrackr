@@ -2,6 +2,13 @@ import { uploadPetPictureToFirebase } from "@/api/imageApi";
 import * as petApi from "@/api/petApi";
 import AppHeader from "@/components/AppHeader";
 import { useAuthSession } from "@/providers/authctx";
+import { buttonStyles } from "@/styles/buttonStyles";
+import { cardStyles } from "@/styles/cardStyles";
+import { colors } from "@/styles/colors";
+import { inputStyles } from "@/styles/inputStyles";
+import { layoutStyles } from "@/styles/layoutStyles";
+import { rowStyles } from "@/styles/rowStyles";
+import { textStyles } from "@/styles/textStyles";
 import { PetData } from "@/types/pet";
 import { pickProfilePicture } from "@/utils/pickProfilePicture";
 import { Feather } from "@expo/vector-icons";
@@ -77,7 +84,7 @@ export default function PetDetailPage() {
   // Laster
   if (isLoading || pet === null) {
     return (
-      <View style={styles.center}>
+      <View style={layoutStyles.center}>
         <ActivityIndicator />
         <Text style={{ marginTop: 8 }}>Laster pet...</Text>
       </View>
@@ -199,7 +206,7 @@ export default function PetDetailPage() {
   }
 
   return (
-    <View style={styles.screen}>
+    <View style={layoutStyles.screen}>
       {/* HEADER */}
       <AppHeader
         title={pet.name}
@@ -214,7 +221,7 @@ export default function PetDetailPage() {
 
       {/* CONTENT (SCROLL) */}
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={layoutStyles.content}
         showsVerticalScrollIndicator={false}
       >
         {/* "BILDEFELT" (hero) */}
@@ -230,7 +237,7 @@ export default function PetDetailPage() {
             {/* Kameraikon */}
             <Pressable
               style={[
-                styles.cameraButton,
+                buttonStyles.cameraButton,
                 { opacity: isUploadingPhoto ? 0.6 : 1 },
               ]}
               onPress={onChangePetPhoto}
@@ -246,12 +253,12 @@ export default function PetDetailPage() {
         </View>
 
         {/* BASIC INFO CARD */}
-        <View style={styles.card}>
-          <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardTitle}>Basic Info</Text>
+        <View style={cardStyles.card}>
+          <View style={cardStyles.cardHeaderRow}>
+            <Text style={[textStyles.sectionTitle]}>Basic Info</Text>
 
             {/* Cancel + Delete + Save/Edit  */}
-            <View style={styles.headerActions}>
+            <View style={rowStyles.logRow}>
               {/* Delete + Cancel vises kun når vi redigerer */}
               {isEditingPetInfo && (
                 <>
@@ -263,7 +270,7 @@ export default function PetDetailPage() {
                     }}
                     onPress={onDeletePet}
                   >
-                    <Text style={styles.deleteLink}>
+                    <Text style={textStyles.deleteText}>
                       {isDeletingPet ? "Deleting..." : "Delete"}
                     </Text>
                   </Pressable>
@@ -281,7 +288,7 @@ export default function PetDetailPage() {
                       setIsEditingPetInfo(false);
                     }}
                   >
-                    <Text style={styles.cancelLink}>Cancel</Text>
+                    <Text style={textStyles.cancelText}>Cancel</Text>
                   </Pressable>
                 </>
               )}
@@ -322,30 +329,48 @@ export default function PetDetailPage() {
                     }}
                   >
                     {isSavingPetInfo && <ActivityIndicator size="small" />}
-                    <Text style={styles.editLink}>
+                    <Text
+                      style={[
+                        textStyles.switchText,
+                        { textDecorationLine: "none" },
+                        { fontWeight: "600" },
+                      ]}
+                    >
                       {isSavingPetInfo ? "Lagrer..." : "Save"}
                     </Text>
                   </View>
                 ) : (
-                  <Text style={styles.editLink}>Edit</Text>
+                  <Text
+                    style={[
+                      textStyles.switchText,
+                      { textDecorationLine: "none" },
+                      { fontWeight: "600" },
+                    ]}
+                  >
+                    Edit
+                  </Text>
                 )}
               </Pressable>
             </View>
           </View>
 
-          <View style={styles.divider} />
+          <View style={cardStyles.divider} />
 
           <View style={styles.basicGrid}>
             {/* Name */}
             <View style={styles.basicItem}>
-              <View style={styles.basicIconWrap}>
-                <Feather name="user" size={16} color="#111" />
+              <View style={rowStyles.rowIconWrap}>
+                <Feather name="user" size={16} color={colors.button} />
               </View>
 
               <View style={{ flex: 1 }}>
                 {isEditingPetInfo ? (
                   <TextInput
-                    style={styles.input}
+                    style={[
+                      inputStyles.input,
+                      { fontSize: 14 },
+                      { padding: 8 },
+                    ]}
                     value={editName}
                     onChangeText={setEditName}
                     placeholder="Name"
@@ -353,10 +378,18 @@ export default function PetDetailPage() {
                   />
                 ) : (
                   <>
-                    <Text style={styles.basicValue} numberOfLines={1}>
+                    <Text style={textStyles.sectionTitle} numberOfLines={1}>
                       {pet.name}
                     </Text>
-                    <Text style={styles.basicLabel}>Name</Text>
+                    <Text
+                      style={[
+                        { fontSize: 12 },
+                        { color: colors.textSecondary },
+                        { marginBottom: 2 },
+                      ]}
+                    >
+                      Name
+                    </Text>
                   </>
                 )}
               </View>
@@ -364,14 +397,18 @@ export default function PetDetailPage() {
 
             {/* Type */}
             <View style={styles.basicItem}>
-              <View style={styles.basicIconWrap}>
-                <Feather name="tag" size={16} color="#111" />
+              <View style={rowStyles.rowIconWrap}>
+                <Feather name="tag" size={16} color={colors.button} />
               </View>
 
               <View style={{ flex: 1 }}>
                 {isEditingPetInfo ? (
                   <TextInput
-                    style={styles.input}
+                    style={[
+                      inputStyles.input,
+                      { fontSize: 14 },
+                      { padding: 8 },
+                    ]}
                     value={editType}
                     onChangeText={setEditType}
                     placeholder="Type"
@@ -379,10 +416,18 @@ export default function PetDetailPage() {
                   />
                 ) : (
                   <>
-                    <Text style={styles.basicValue} numberOfLines={1}>
+                    <Text style={textStyles.sectionTitle} numberOfLines={1}>
                       {pet.type}
                     </Text>
-                    <Text style={styles.basicLabel}>Type</Text>
+                    <Text
+                      style={[
+                        { fontSize: 12 },
+                        { color: colors.textSecondary },
+                        { marginBottom: 2 },
+                      ]}
+                    >
+                      Type
+                    </Text>
                   </>
                 )}
               </View>
@@ -391,13 +436,15 @@ export default function PetDetailPage() {
         </View>
 
         {/* RECENT ACTIVITY CARD */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          <View style={styles.divider} />
+        <View style={cardStyles.card}>
+          <Text style={[textStyles.sectionTitle, { paddingBottom: 10 }]}>
+            Recent Activity
+          </Text>
+          <View style={cardStyles.divider} />
 
           {/* ACTIVITY */}
           <Pressable
-            style={styles.activityRow}
+            style={rowStyles.row}
             onPress={() =>
               router.push({
                 pathname: "/pets/activity/[id]",
@@ -405,24 +452,24 @@ export default function PetDetailPage() {
               })
             }
           >
-            <View style={styles.activityLeft}>
-              <View style={styles.activityIconWrap}>
-                <Feather name="activity" size={18} color="#111" />
+            <View style={rowStyles.rowLeft}>
+              <View style={rowStyles.rowIconWrap}>
+                <Feather name="activity" size={18} color={colors.button} />
               </View>
 
               <View>
-                <Text style={styles.activityTitle}>Activity</Text>
-                <Text style={styles.activitySubtitle}>Track walks</Text>
+                <Text style={textStyles.sectionTitle}>Activity</Text>
+                <Text style={textStyles.dateTextLarge}>Track walks</Text>
               </View>
             </View>
-            <Feather name="chevron-right" size={22} color="#111" />
+            <Feather name="chevron-right" size={22} color={colors.button} />
           </Pressable>
 
-          <View style={styles.rowDivider} />
+          <View style={cardStyles.divider} />
 
           {/* FOOD */}
           <Pressable
-            style={styles.activityRow}
+            style={rowStyles.row}
             onPress={() =>
               router.push({
                 pathname: "/pets/food/[id]",
@@ -430,25 +477,25 @@ export default function PetDetailPage() {
               })
             }
           >
-            <View style={styles.activityLeft}>
-              <View style={styles.activityIconWrap}>
-                <Feather name="shopping-bag" size={18} color="#111" />
+            <View style={rowStyles.rowLeft}>
+              <View style={rowStyles.rowIconWrap}>
+                <Feather name="shopping-bag" size={18} color={colors.button} />
               </View>
 
               <View>
-                <Text style={styles.activityTitle}>Food</Text>
-                <Text style={styles.activitySubtitle}>Track meals</Text>
+                <Text style={textStyles.sectionTitle}>Food</Text>
+                <Text style={textStyles.dateTextLarge}>Track meals</Text>
               </View>
             </View>
 
-            <Feather name="chevron-right" size={22} color="#111" />
+            <Feather name="chevron-right" size={22} color={colors.button} />
           </Pressable>
 
-          <View style={styles.rowDivider} />
+          <View style={cardStyles.divider} />
 
           {/* MEDS */}
           <Pressable
-            style={styles.activityRow}
+            style={rowStyles.row}
             onPress={() =>
               router.push({
                 pathname: "/pets/medic/[id]",
@@ -456,51 +503,65 @@ export default function PetDetailPage() {
               })
             }
           >
-            <View style={styles.activityLeft}>
-              <View style={styles.activityIconWrap}>
-                <Feather name="plus-square" size={18} color="#111" />
+            <View style={rowStyles.rowLeft}>
+              <View style={rowStyles.rowIconWrap}>
+                <Feather name="plus-square" size={18} color={colors.button} />
               </View>
 
               <View>
-                <Text style={styles.activityTitle}>Medication</Text>
-                <Text style={styles.activitySubtitle}>
+                <Text style={textStyles.sectionTitle}>Medication</Text>
+                <Text style={textStyles.dateTextLarge}>
                   Track medication and treatments
                 </Text>
               </View>
             </View>
 
-            <Feather name="chevron-right" size={22} color="#111" />
+            <Feather name="chevron-right" size={22} color={colors.button} />
           </Pressable>
         </View>
 
         {/* NEDRE KORT  */}
-        <View style={styles.card}>
-          <Pressable style={styles.simpleRow} onPress={() => {}}>
-            <View style={styles.simpleLeft}>
-              <View style={styles.simpleIconWrap} />
-              <Text style={styles.simpleText}>Medical Records</Text>
+        <View style={cardStyles.card}>
+          <Text style={[textStyles.sectionTitle, { paddingBottom: 10 }]}>
+            Other
+          </Text>
+          <View style={cardStyles.divider} />
+          <Pressable style={rowStyles.row} onPress={() => {}}>
+            <View style={rowStyles.rowLeft}>
+              <View style={rowStyles.rowIconWrap} />
+              <View>
+                <Text style={textStyles.sectionTitle}>Medical Records</Text>
+                <Text style={textStyles.dateTextLarge}>
+                  Track medical records (Coming soon)
+                </Text>
+              </View>
             </View>
-            <Feather name="chevron-right" size={22} color="#111" />
+            <Feather name="chevron-right" size={22} color={colors.button} />
           </Pressable>
 
-          <View style={styles.rowDivider} />
+          <View style={cardStyles.divider} />
 
-          <Pressable style={styles.simpleRow} onPress={() => {}}>
-            <View style={styles.simpleLeft}>
-              <View style={styles.simpleIconWrap} />
-              <Text style={styles.simpleText}>Prescriptions</Text>
+          <Pressable style={rowStyles.row} onPress={() => {}}>
+            <View style={rowStyles.rowLeft}>
+              <View style={rowStyles.rowIconWrap} />
+              <View>
+                <Text style={textStyles.sectionTitle}>Prescriptions</Text>
+                <Text style={textStyles.dateTextLarge}>
+                  Track prescriptions (Coming soon)
+                </Text>
+              </View>
             </View>
-            <Feather name="chevron-right" size={22} color="#111" />
+            <Feather name="chevron-right" size={22} color={colors.button} />
           </Pressable>
 
-          <View style={styles.rowDivider} />
+          <View style={cardStyles.divider} />
 
-          <Pressable style={styles.simpleRow} onPress={() => {}}>
-            <View style={styles.simpleLeft}>
-              <View style={styles.simpleIconWrap} />
-              <Text style={styles.simpleText}>???</Text>
+          <Pressable style={rowStyles.row} onPress={() => {}}>
+            <View style={rowStyles.rowLeft}>
+              <View style={rowStyles.rowIconWrap} />
+              <Text style={textStyles.sectionTitle}>???</Text>
             </View>
-            <Feather name="chevron-right" size={22} color="#111" />
+            <Feather name="chevron-right" size={22} color={colors.button} />
           </Pressable>
         </View>
 
@@ -512,36 +573,6 @@ export default function PetDetailPage() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#F6F2EE",
-  },
-
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F6F2EE",
-  },
-
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    gap: 14,
-    paddingBottom: 20,
-  },
-
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
-  },
-
   heroCard: {
     backgroundColor: "transparent",
   },
@@ -561,55 +592,6 @@ const styles = StyleSheet.create({
     height: "100%",
     backgroundColor: "#3E3E3E",
   },
-  cameraButton: {
-    position: "absolute",
-    right: 12,
-    top: 12,
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.75)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  cardHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingBottom: 10,
-  },
-  cardTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111",
-  },
-  editLink: {
-    fontSize: 14,
-    color: "#2B6DEB",
-    fontWeight: "600",
-  },
-
-  headerActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  cancelLink: {
-    fontSize: 14,
-    color: "#666",
-    fontWeight: "600",
-  },
-
-  divider: {
-    height: 1,
-    backgroundColor: "#EDEDED",
-    marginBottom: 8,
-  },
-  rowDivider: {
-    height: 1,
-    backgroundColor: "#F0F0F0",
-  },
 
   basicGrid: {
     flexDirection: "row",
@@ -623,101 +605,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     paddingVertical: 8,
-  },
-  basicIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: "#F3F0EC",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  basicValue: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111",
-    maxWidth: 140,
-  },
-  basicLabel: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 2,
-  },
-
-  input: {
-    fontSize: 14,
-    color: "#111",
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: "#E6E6E6",
-    borderRadius: 10,
-    backgroundColor: "#fff",
-  },
-
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111",
-    paddingBottom: 10,
-  },
-  activityRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-  },
-  activityLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    flex: 1,
-    paddingRight: 10,
-  },
-  activityIconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: "transparent",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  activityTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111",
-  },
-  activitySubtitle: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 2,
-  },
-
-  simpleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 14,
-  },
-  simpleLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  simpleIconWrap: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    backgroundColor: "#F3F0EC",
-  },
-  simpleText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111",
-  },
-  deleteLink: {
-    fontSize: 14,
-    color: "#E53935",
-    fontWeight: "700",
   },
 });

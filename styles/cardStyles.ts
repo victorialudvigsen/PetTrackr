@@ -20,4 +20,11 @@ export const cardStyles = StyleSheet.create({
     backgroundColor: colors.border,
     marginBottom: 10,
   },
+
+  cardHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingBottom: 10,
+  },
 });

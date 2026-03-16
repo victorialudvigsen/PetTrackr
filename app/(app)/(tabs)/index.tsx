@@ -4,8 +4,11 @@ import * as petApi from "@/api/petApi";
 import * as walkApi from "@/api/walkApi";
 import AppHeader from "@/components/AppHeader";
 import { useAuthSession } from "@/providers/authctx";
+import { buttonStyles } from "@/styles/buttonStyles";
 import { cardStyles } from "@/styles/cardStyles";
+import { colors } from "@/styles/colors";
 import { layoutStyles } from "@/styles/layoutStyles";
+import { rowStyles } from "@/styles/rowStyles";
 import { textStyles } from "@/styles/textStyles";
 import { FoodEntryData } from "@/types/food";
 import { MedicEntryData } from "@/types/medic";
@@ -156,13 +159,33 @@ export default function HomePage() {
       >
         {/* GREETING */}
         <View style={styles.greetingWrap}>
-          <Text style={[textStyles.pageTitle, { fontSize: 26 }]}>
+          <Text
+            style={[
+              textStyles.pageTitle,
+              { fontSize: 26 },
+              { color: colors.button },
+            ]}
+          >
             {greeting},
           </Text>
-          <Text style={[textStyles.pageTitle, { fontSize: 26 }]}>
+          <Text
+            style={[
+              textStyles.pageTitle,
+              { fontSize: 26 },
+              { color: colors.button },
+            ]}
+          >
             {localDisplayName ?? "Friend"} 🐕
           </Text>
-          <Text style={textStyles.pageSubtitle}>{pets.length} pets</Text>
+          <Text
+            style={[
+              textStyles.pageSubtitle,
+              { marginTop: 0 },
+              { marginBottom: 8 },
+            ]}
+          >
+            {pets.length} pets
+          </Text>
         </View>
 
         {/* PET SWITCHER */}
@@ -238,15 +261,17 @@ export default function HomePage() {
             )}
 
             <View style={{ marginTop: 14 }}>
-              <Text style={styles.petName}>{activePet.name}</Text>
-              <Text style={styles.petType}>{activePet.type}</Text>
+              <Text style={[textStyles.sectionTitle, { fontSize: 16 }]}>
+                {activePet.name}
+              </Text>
+              <Text style={textStyles.pageSubtitle}>{activePet.type}</Text>
             </View>
           </Pressable>
         )}
 
         {/* QUICK ACTIONS */}
         {activePet && (
-          <View style={styles.quickActions}>
+          <View style={[rowStyles.row, { paddingVertical: 2 }]}>
             {[
               { icon: "dog", label: "Walk", family: "FontAwesome5" },
               {
@@ -259,7 +284,7 @@ export default function HomePage() {
             ].map((item) => (
               <Pressable
                 key={item.label}
-                style={styles.quickItem}
+                style={[{ alignItems: "center" }, { flex: 1 }]}
                 onPress={() => {
                   if (item.label === "Walk") {
                     router.push({
@@ -289,7 +314,7 @@ export default function HomePage() {
                   }
                 }}
               >
-                <View style={styles.quickCircle}>
+                <View style={buttonStyles.iconCircle}>
                   {(() => {
                     switch (item.family) {
                       case "FontAwesome5":
@@ -297,7 +322,7 @@ export default function HomePage() {
                           <FontAwesome5
                             name={item.icon as any}
                             size={20}
-                            color="#111"
+                            color={colors.button}
                           />
                         );
 
@@ -306,7 +331,7 @@ export default function HomePage() {
                           <Ionicons
                             name={item.icon as any}
                             size={20}
-                            color="#111"
+                            color={colors.button}
                           />
                         );
 
@@ -315,7 +340,7 @@ export default function HomePage() {
                           <FontAwesome
                             name={item.icon as any}
                             size={20}
-                            color="#111"
+                            color={colors.button}
                           />
                         );
 
@@ -324,7 +349,7 @@ export default function HomePage() {
                     }
                   })()}
                 </View>
-                <Text style={styles.quickLabel}>{item.label}</Text>
+                <Text style={textStyles.logSubtitle}>{item.label}</Text>
               </Pressable>
             ))}
           </View>
@@ -332,11 +357,19 @@ export default function HomePage() {
 
         {/* TODAY CARD */}
         <View style={cardStyles.card}>
-          <Text style={styles.sectionTitle}>Today</Text>
+          <Text style={[textStyles.sectionTitle, { marginBottom: 8 }]}>
+            Today
+          </Text>
           <View style={cardStyles.divider} />
 
           {nextReminder ? (
-            <Text style={styles.todayText}>
+            <Text
+              style={[
+                textStyles.pageSubtitle,
+                { marginTop: 0 },
+                { marginBottom: 8 },
+              ]}
+            >
               • {nextReminder.name} at{" "}
               {nextReminder.remindAt.toLocaleTimeString([], {
                 hour: "2-digit",
@@ -344,35 +377,97 @@ export default function HomePage() {
               })}
             </Text>
           ) : (
-            <Text style={styles.todayText}>• No medication reminders</Text>
+            <Text
+              style={[
+                textStyles.pageSubtitle,
+                { marginTop: 0 },
+                { marginBottom: 8 },
+              ]}
+            >
+              • No medication reminders
+            </Text>
           )}
-          <Text style={styles.todayText}>
+          <Text
+            style={[
+              textStyles.pageSubtitle,
+              { marginTop: 0 },
+              { marginBottom: 8 },
+            ]}
+          >
             • No vet visits today (Coming soon)
           </Text>
         </View>
 
         {/* RECENT ACTIVITY */}
         <View style={cardStyles.card}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
+          <Text style={[textStyles.sectionTitle, { marginBottom: 8 }]}>
+            Recent Activity
+          </Text>
           <View style={cardStyles.divider} />
 
           {latestWalk ? (
-            <Text style={styles.todayText}>
+            <Text
+              style={[
+                textStyles.pageSubtitle,
+                { marginTop: 0 },
+                { marginBottom: 8 },
+              ]}
+            >
               🐾 Walk – {latestWalk.duration} min
             </Text>
           ) : (
-            <Text style={styles.todayText}>🐾 No walks yet</Text>
+            <Text
+              style={[
+                textStyles.pageSubtitle,
+                { marginTop: 0 },
+                { marginBottom: 8 },
+              ]}
+            >
+              🐾 No walks yet
+            </Text>
           )}
 
           {latestMeal ? (
-            <Text style={styles.todayText}>🍖 Food – {latestMeal.grams} g</Text>
+            <Text
+              style={[
+                textStyles.pageSubtitle,
+                { marginTop: 0 },
+                { marginBottom: 8 },
+              ]}
+            >
+              🍖 Food – {latestMeal.grams} g
+            </Text>
           ) : (
-            <Text style={styles.todayText}>🍖 No meals yet</Text>
+            <Text
+              style={[
+                textStyles.pageSubtitle,
+                { marginTop: 0 },
+                { marginBottom: 8 },
+              ]}
+            >
+              🍖 No meals yet
+            </Text>
           )}
           {latestMeds ? (
-            <Text style={styles.todayText}>💊 Meds – {latestMeds?.name} </Text>
+            <Text
+              style={[
+                textStyles.pageSubtitle,
+                { marginTop: 0 },
+                { marginBottom: 8 },
+              ]}
+            >
+              💊 Meds – {latestMeds?.name}{" "}
+            </Text>
           ) : (
-            <Text style={styles.todayText}>💊 No medication yet</Text>
+            <Text
+              style={[
+                textStyles.pageSubtitle,
+                { marginTop: 0 },
+                { marginBottom: 8 },
+              ]}
+            >
+              💊 No medication yet
+            </Text>
           )}
         </View>
 
@@ -407,18 +502,18 @@ const styles = StyleSheet.create({
 
   petSwitchImageActive: {
     borderWidth: 2,
-    borderColor: "#111",
+    borderColor: colors.button,
   },
 
   petSwitchPlaceholder: {
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: "#3E3E3E",
+    backgroundColor: colors.placeholder,
   },
 
   petSwitchNameActive: {
-    color: "#111",
+    color: colors.button,
     fontWeight: "700",
   },
 
@@ -432,56 +527,6 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 190,
     borderRadius: 16,
-    backgroundColor: "#3E3E3E",
-  },
-
-  petName: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#111",
-  },
-
-  petType: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 4,
-  },
-
-  quickActions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-
-  quickItem: {
-    alignItems: "center",
-    flex: 1,
-  },
-
-  quickCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#F3F0EC",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  quickLabel: {
-    fontSize: 12,
-    color: "#111",
-    marginTop: 6,
-  },
-
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111",
-    marginBottom: 8,
-  },
-
-  todayText: {
-    fontSize: 14,
-    color: "#444",
-    marginBottom: 6,
+    backgroundColor: colors.placeholder,
   },
 });

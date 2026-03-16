@@ -11,4 +11,10 @@ export const colors = {
   border: "#EDEDED",
 
   shadow: "#000",
+
+  button: "#007AFF",
+
+  placeholder: "#3E3E3E",
+
+  delete: "#E53935",
 };

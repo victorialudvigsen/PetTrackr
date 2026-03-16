@@ -171,7 +171,7 @@ export default function ProfilePage() {
 
         {/* USER INFORMATION CARD */}
         <View style={cardStyles.card}>
-          <View style={styles.cardHeaderRow}>
+          <View style={cardStyles.cardHeaderRow}>
             <Text style={textStyles.sectionTitle}>User Information</Text>
 
             {/* Høyre side: Avbryt + Save/Edit */}
@@ -190,7 +190,7 @@ export default function ProfilePage() {
                     setIsEditingUserInfo(false);
                   }}
                 >
-                  <Text style={styles.cancelLink}>Cancel</Text>
+                  <Text style={textStyles.cancelText}>Cancel</Text>
                 </Pressable>
               )}
 
@@ -274,12 +274,26 @@ export default function ProfilePage() {
                     }}
                   >
                     {isSavingUserInfo && <ActivityIndicator size="small" />}
-                    <Text style={styles.editLink}>
+                    <Text
+                      style={[
+                        textStyles.switchText,
+                        { textDecorationLine: "none" },
+                        { fontWeight: "600" },
+                      ]}
+                    >
                       {isSavingUserInfo ? "Saving..." : "Save"}
                     </Text>
                   </View>
                 ) : (
-                  <Text style={styles.editLink}>Edit</Text>
+                  <Text
+                    style={[
+                      textStyles.switchText,
+                      { textDecorationLine: "none" },
+                      { fontWeight: "600" },
+                    ]}
+                  >
+                    Edit
+                  </Text>
                 )}
               </Pressable>
             </View>
@@ -291,7 +305,7 @@ export default function ProfilePage() {
           {/* Name */}
           <View style={styles.infoRow}>
             <View style={styles.infoIconWrap}>
-              <Feather name="user" size={18} color="#111" />
+              <Feather name="user" size={18} color={colors.button} />
             </View>
 
             {isEditingUserInfo ? (
@@ -313,7 +327,7 @@ export default function ProfilePage() {
           {/* Email */}
           <View style={styles.infoRow}>
             <View style={styles.infoIconWrap}>
-              <Feather name="mail" size={18} color="#111" />
+              <Feather name="mail" size={18} color={colors.button} />
             </View>
 
             {isEditingUserInfo ? (
@@ -358,7 +372,7 @@ export default function ProfilePage() {
           {/* Phone */}
           <View style={styles.infoRow}>
             <View style={styles.infoIconWrap}>
-              <Feather name="phone" size={18} color="#111" />
+              <Feather name="phone" size={18} color={colors.button} />
             </View>
 
             {isEditingUserInfo ? (
@@ -379,7 +393,7 @@ export default function ProfilePage() {
 
         {/* MY PETS CARD */}
         <View style={cardStyles.card}>
-          <View style={styles.cardHeaderRow}>
+          <View style={cardStyles.cardHeaderRow}>
             <Text style={textStyles.sectionTitle}>My Pets</Text>
 
             <Pressable
@@ -467,26 +481,11 @@ const styles = StyleSheet.create({
   },
 
   // Card header
-  cardHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingBottom: 10,
-  },
-  editLink: {
-    fontSize: 14,
-    color: "#2B6DEB",
-    fontWeight: "600",
-  },
+
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-  },
-  cancelLink: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    fontWeight: "600",
   },
 
   // Info rows

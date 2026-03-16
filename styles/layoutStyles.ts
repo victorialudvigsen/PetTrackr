@@ -22,4 +22,10 @@ export const layoutStyles = StyleSheet.create({
   titleWrap: {
     marginTop: 8,
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingTop: 18,
+    paddingBottom: 10,
+  },
 });

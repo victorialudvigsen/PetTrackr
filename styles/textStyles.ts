@@ -57,4 +57,24 @@ export const textStyles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
+  switchText: {
+    color: colors.button,
+    textDecorationLine: "underline",
+    fontSize: 14,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.textPrimary,
+  },
+  deleteText: {
+    fontSize: 14,
+    color: colors.delete,
+    fontWeight: "700",
+  },
+  cancelText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: "600",
+  },
 });

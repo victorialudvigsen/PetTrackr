@@ -1,6 +1,11 @@
 import { uploadPetPictureToFirebase } from "@/api/imageApi";
 import * as petApi from "@/api/petApi";
 import { useAuthSession } from "@/providers/authctx";
+import { buttonStyles } from "@/styles/buttonStyles";
+import { cardStyles } from "@/styles/cardStyles";
+import { inputStyles } from "@/styles/inputStyles";
+import { layoutStyles } from "@/styles/layoutStyles";
+import { textStyles } from "@/styles/textStyles";
 import { pickProfilePicture } from "@/utils/pickProfilePicture";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -75,23 +80,23 @@ export default function AddPetPage() {
   };
 
   return (
-    <View style={styles.screen}>
+    <View style={[layoutStyles.screen, { padding: 16 }]}>
       {/* HEADER */}
-      <View style={styles.header}>
+      <View style={layoutStyles.header}>
         <Pressable
-          style={styles.backButton}
+          style={buttonStyles.backButton}
           onPress={() => router.replace("/profile")}
         >
           <Feather name="chevron-left" size={26} color="#111" />
         </Pressable>
 
-        <Text style={styles.headerTitle}>Add Pet</Text>
+        <Text style={[textStyles.pageTitle, { fontSize: 22 }]}>Add Pet</Text>
 
         <View style={{ width: 40 }} />
       </View>
 
       {/* CONTENT */}
-      <View style={styles.card}>
+      <View style={[cardStyles.card, { gap: 10 }]}>
         {/* PHOTO PICKER */}
         <Pressable
           style={styles.photoRow}
@@ -113,8 +118,8 @@ export default function AddPetPage() {
           </View>
 
           <View style={{ flex: 1 }}>
-            <Text style={styles.photoTitle}>Pet photo</Text>
-            <Text style={styles.photoSubtitle}>
+            <Text style={textStyles.sectionTitle}>Pet photo</Text>
+            <Text style={textStyles.dateTextLarge}>
               {petImageUri ? "Tap to change" : "Tap to add"}
             </Text>
           </View>
@@ -122,20 +127,20 @@ export default function AddPetPage() {
           <Feather name="chevron-right" size={20} color="#111" />
         </Pressable>
 
-        <View style={styles.divider} />
+        <View style={cardStyles.divider} />
 
-        <Text style={styles.label}>Name</Text>
+        <Text style={textStyles.label}>Name</Text>
         <TextInput
-          style={styles.input}
+          style={[inputStyles.input, { fontSize: 14 }]}
           value={name}
           onChangeText={setName}
           placeholder="e.g. Lasse"
           editable={!isSaving}
         />
 
-        <Text style={styles.label}>Type</Text>
+        <Text style={textStyles.label}>Type</Text>
         <TextInput
-          style={styles.input}
+          style={[inputStyles.input, { fontSize: 14 }]}
           value={type}
           onChangeText={setType}
           placeholder="e.g. Dog"
@@ -143,13 +148,13 @@ export default function AddPetPage() {
         />
 
         <Pressable
-          style={[styles.saveButton, { opacity: isSaving ? 0.7 : 1 }]}
+          style={[buttonStyles.saveButton, { opacity: isSaving ? 0.7 : 1 }]}
           onPress={onSave}
           disabled={isSaving}
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             {isSaving && <ActivityIndicator size="small" />}
-            <Text style={styles.saveButtonText}>
+            <Text style={buttonStyles.saveButtonText}>
               {isSaving ? "Saving..." : "Save pet"}
             </Text>
           </View>
@@ -160,44 +165,6 @@ export default function AddPetPage() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#F6F2EE",
-    padding: 16,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingTop: 18,
-    paddingBottom: 10,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#111",
-    textAlign: "center",
-  },
-
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
-    gap: 10,
-  },
-
   photoRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -219,50 +186,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-  },
-  photoTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111",
-  },
-  photoSubtitle: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 2,
-  },
-
-  divider: {
-    height: 1,
-    backgroundColor: "#EDEDED",
-    marginVertical: 6,
-  },
-
-  label: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#111",
-    marginTop: 4,
-  },
-  input: {
-    fontSize: 14,
-    color: "#111",
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: "#E6E6E6",
-    borderRadius: 10,
-    backgroundColor: "#fff",
-  },
-  saveButton: {
-    marginTop: 10,
-    backgroundColor: "#2B6DEB",
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  saveButtonText: {
-    color: "white",
-    fontWeight: "700",
-    fontSize: 16,
   },
 });

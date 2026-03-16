@@ -1,6 +1,7 @@
 import { useAuthSession } from "@/providers/authctx";
-import { colors } from "@/styles/colors";
+import { buttonStyles } from "@/styles/buttonStyles";
 import { inputStyles } from "@/styles/inputStyles";
+import { layoutStyles } from "@/styles/layoutStyles";
 import { textStyles } from "@/styles/textStyles";
 import React, { useState } from "react";
 import {
@@ -73,11 +74,13 @@ export default function AuthenticationPage() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
+      style={layoutStyles.center}
     >
       <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
         <View style={styles.mainContainer}>
-          <Text style={styles.mainTitle}>PetTrackr</Text>
+          <Text style={[textStyles.pageTitle, { fontSize: 30 }]}>
+            PetTrackr
+          </Text>
           <Text style={[{ fontSize: 30 }, { marginBottom: 10 }]}>🐾</Text>
           <Text style={[textStyles.pageTitle, { marginBottom: 16 }]}>
             {isRegistering ? "Register" : "Sign in"}
@@ -86,7 +89,9 @@ export default function AuthenticationPage() {
           {/* BRUKERNAVN */}
           {isRegistering && (
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Username</Text>
+              <Text style={[textStyles.label, { marginBottom: 4 }]}>
+                Username
+              </Text>
               <TextInput
                 style={inputStyles.input}
                 placeholder="Username"
@@ -98,7 +103,7 @@ export default function AuthenticationPage() {
 
           {/* E-POST */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>E-mail</Text>
+            <Text style={[textStyles.label, { marginBottom: 4 }]}>E-mail</Text>
             <TextInput
               style={inputStyles.input}
               placeholder="E-mail"
@@ -110,7 +115,9 @@ export default function AuthenticationPage() {
 
           {/* PASSORD */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Password</Text>
+            <Text style={[textStyles.label, { marginBottom: 4 }]}>
+              Password
+            </Text>
             <TextInput
               style={inputStyles.input}
               placeholder="Password"
@@ -125,7 +132,7 @@ export default function AuthenticationPage() {
             onPress={() => setIsRegistering(!isRegistering)}
             style={{ marginTop: 20 }}
           >
-            <Text style={styles.switchText}>
+            <Text style={textStyles.switchText}>
               {isRegistering
                 ? "Already have an account? Sign in"
                 : "No account? Sign up here"}
@@ -134,10 +141,10 @@ export default function AuthenticationPage() {
 
           {/* KNAPP */}
           <Pressable
-            style={styles.mainButton}
+            style={buttonStyles.mainButton}
             onPress={isRegistering ? handleRegister : handleLogin}
           >
-            <Text style={styles.mainButtonText}>
+            <Text style={buttonStyles.mainButtonText}>
               {isRegistering ? "Register user" : "Sign in"}
             </Text>
           </Pressable>
@@ -148,11 +155,6 @@ export default function AuthenticationPage() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    backgroundColor: "white",
-  },
   mainContainer: {
     flex: 1,
     justifyContent: "center",
@@ -164,34 +166,5 @@ const styles = StyleSheet.create({
   inputContainer: {
     width: "100%",
     marginBottom: 12,
-  },
-  label: {
-    fontSize: 14,
-    marginBottom: 4,
-  },
-
-  mainButton: {
-    backgroundColor: "#007AFF",
-    padding: 14,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 24,
-    width: "100%",
-  },
-  mainButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  switchText: {
-    color: "#007AFF",
-    textDecorationLine: "underline",
-    fontSize: 14,
-  },
-  mainTitle: {
-    fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 12,
-    color: colors.textPrimary,
   },
 });
