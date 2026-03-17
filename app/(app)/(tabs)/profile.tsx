@@ -13,6 +13,7 @@ import ProfilePicture from "@/components/ProfilePicture";
 import { useAuthSession } from "@/providers/authctx";
 import { pickProfilePicture } from "@/utils/pickProfilePicture";
 import { Feather } from "@expo/vector-icons";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -396,11 +397,8 @@ export default function ProfilePage() {
           <View style={cardStyles.cardHeaderRow}>
             <Text style={textStyles.sectionTitle}>My Pets</Text>
 
-            <Pressable
-              style={styles.circleIconButton}
-              onPress={() => router.push("/pets/addPet")}
-            >
-              <Feather name="plus" size={16} color="#111" />
+            <Pressable onPress={() => router.push("/pets/addPet")}>
+              <AntDesign name="plus-circle" size={24} color={colors.button} />
             </Pressable>
           </View>
 
@@ -445,7 +443,11 @@ export default function ProfilePage() {
                       </View>
                     </View>
 
-                    <Feather name="chevron-right" size={22} color="#111" />
+                    <Feather
+                      name="chevron-right"
+                      size={22}
+                      color={colors.button}
+                    />
                   </Pressable>
 
                   {!isLast && <View style={cardStyles.divider} />}
@@ -481,7 +483,6 @@ const styles = StyleSheet.create({
   },
 
   // Card header
-
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
@@ -503,18 +504,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: colors.textPrimary,
-  },
-
-  // Buttons
-  circleIconButton: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: colors.textPrimary,
-    backgroundColor: "transparent",
   },
 
   // Pets

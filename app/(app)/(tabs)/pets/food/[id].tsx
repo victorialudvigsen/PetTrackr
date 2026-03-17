@@ -5,6 +5,7 @@ import SwipeDeleteRow from "@/components/SwipeDeleteRow";
 import { useAuthSession } from "@/providers/authctx";
 import { buttonStyles } from "@/styles/buttonStyles";
 import { cardStyles } from "@/styles/cardStyles";
+import { colors } from "@/styles/colors";
 import { layoutStyles } from "@/styles/layoutStyles";
 import { rowStyles } from "@/styles/rowStyles";
 import { textStyles } from "@/styles/textStyles";
@@ -137,7 +138,11 @@ export default function FoodPage() {
         <View style={cardStyles.card}>
           <View style={rowStyles.logRow}>
             <View style={buttonStyles.iconCircle}>
-              <Ionicons name="fast-food-sharp" size={22} color="black" />
+              <Ionicons
+                name="fast-food-sharp"
+                size={22}
+                color={colors.button}
+              />
             </View>
 
             <View style={{ flex: 1 }}>
@@ -156,7 +161,7 @@ export default function FoodPage() {
                 })
               }
             >
-              <Feather name="plus" size={18} color="#111" />
+              <Feather name="plus" size={18} color={colors.button} />
             </Pressable>
           </View>
         </View>

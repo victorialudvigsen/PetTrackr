@@ -6,6 +6,7 @@ import { textStyles } from "@/styles/textStyles";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -81,7 +82,10 @@ export default function AuthenticationPage() {
           <Text style={[textStyles.pageTitle, { fontSize: 30 }]}>
             PetTrackr
           </Text>
-          <Text style={[{ fontSize: 30 }, { marginBottom: 10 }]}>🐾</Text>
+          <Image
+            source={require("@/assets/images/paws.png")}
+            style={{ width: 35, height: 35, margin: 10 }}
+          />
           <Text style={[textStyles.pageTitle, { marginBottom: 16 }]}>
             {isRegistering ? "Register" : "Sign in"}
           </Text>

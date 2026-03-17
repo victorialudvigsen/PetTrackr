@@ -11,7 +11,9 @@ import { rowStyles } from "@/styles/rowStyles";
 import { textStyles } from "@/styles/textStyles";
 import { PetData } from "@/types/pet";
 import { pickProfilePicture } from "@/utils/pickProfilePicture";
-import { Feather } from "@expo/vector-icons";
+import { Feather, FontAwesome } from "@expo/vector-icons";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -45,6 +47,9 @@ export default function PetDetailPage() {
 
   const [editName, setEditName] = useState("");
   const [editType, setEditType] = useState("");
+  const [editWeight, setEditWeight] = useState("");
+  const [editGender, setEditGender] = useState("");
+  const [editAge, setEditAge] = useState("");
 
   const [isDeletingPet, setIsDeletingPet] = useState(false);
 
@@ -65,6 +70,9 @@ export default function PetDetailPage() {
 
         setEditName(pet?.name ?? "");
         setEditType(pet?.type ?? "");
+        setEditWeight(pet?.weight ?? "");
+        setEditGender(pet?.gender ?? "");
+        setEditAge(pet?.age ?? "");
       };
     }, [pet?.name, pet?.type]),
   );
@@ -79,6 +87,9 @@ export default function PetDetailPage() {
     if (!pet) return;
     setEditName(pet.name ?? "");
     setEditType(pet.type ?? "");
+    setEditWeight(pet.weight ?? "");
+    setEditGender(pet.gender ?? "");
+    setEditAge(pet.age ?? "");
   }, [pet?.id]);
 
   // Laster
@@ -94,7 +105,10 @@ export default function PetDetailPage() {
   // Disable Save
   const hasPetInfoChanges =
     editName.trim() !== (pet.name ?? "").trim() ||
-    editType.trim() !== (pet.type ?? "").trim();
+    editType.trim() !== (pet.type ?? "").trim() ||
+    editWeight.trim() !== (pet.weight ?? "").trim() ||
+    editGender.trim() !== (pet.gender ?? "").trim() ||
+    editAge.trim() !== (pet.age ?? "").trim();
 
   async function onChangePetPhoto() {
     if (!user?.uid) return;
@@ -116,7 +130,7 @@ export default function PetDetailPage() {
         pet.id,
       );
       if (!downloadUrl) {
-        Alert.alert("Feil", "Kunne ikke laste opp bildet. Prøv igjen.");
+        Alert.alert("Error", "Could not upload the image. Please try again.");
         await fetchPet(); // ruller tilbake til det som ligger i databasen
         return;
       }
@@ -128,7 +142,7 @@ export default function PetDetailPage() {
       setPet((prev) => (prev ? { ...prev, photoUrl: downloadUrl } : prev));
     } catch (e) {
       console.log("Update pet photo failed:", e);
-      Alert.alert("Feil", "Noe gikk galt. Prøv igjen.");
+      Alert.alert("Error", "Something went wrong. Please try again.");
       await fetchPet();
     } finally {
       setIsUploadingPhoto(false);
@@ -142,9 +156,15 @@ export default function PetDetailPage() {
 
     const cleanName = editName.trim();
     const cleanType = editType.trim();
+    const cleanWeight = editWeight.trim();
+    const cleanGender = editGender.trim();
+    const cleanAge = editAge.trim();
 
-    if (!cleanName || !cleanType) {
-      Alert.alert("Mangler info", "Fyll inn navn og type før du lagrer.");
+    if (!cleanName || !cleanType || !cleanWeight || !cleanGender || !cleanAge) {
+      Alert.alert(
+        "Missing information",
+        "Please fill in the name, type, weight, gender and age before saving.",
+      );
       return;
     }
 
@@ -155,18 +175,30 @@ export default function PetDetailPage() {
       await petApi.updatePetBasicInfo(user.uid, pet.id, {
         name: cleanName,
         type: cleanType,
+        weight: cleanWeight,
+        gender: cleanGender,
+        age: cleanAge,
       });
 
       // Oppdaterer UI direkte
       setPet((prev) =>
-        prev ? { ...prev, name: cleanName, type: cleanType } : prev,
+        prev
+          ? {
+              ...prev,
+              name: cleanName,
+              type: cleanType,
+              weight: cleanWeight,
+              gender: cleanGender,
+              age: cleanAge,
+            }
+          : prev,
       );
 
       setIsEditingPetInfo(false);
       Alert.alert("Success", "Pet updated!");
     } catch (e) {
       console.log("Update pet info failed:", e);
-      Alert.alert("Feil", "Kunne ikke lagre endringene. Prøv igjen.");
+      Alert.alert("Error", "Could not save the changes. Please try again.");
 
       await fetchPet();
     } finally {
@@ -195,7 +227,10 @@ export default function PetDetailPage() {
               router.replace("/profile");
             } catch (e) {
               console.log("Delete pet failed:", e);
-              Alert.alert("Feil", "Kunne ikke slette dyret. Prøv igjen.");
+              Alert.alert(
+                "Error",
+                "Could not delete the animal. Please try again.",
+              );
             } finally {
               setIsDeletingPet(false);
             }
@@ -246,7 +281,7 @@ export default function PetDetailPage() {
               {isUploadingPhoto ? (
                 <ActivityIndicator size="small" />
               ) : (
-                <Feather name="camera" size={18} color="#111" />
+                <Feather name="camera" size={18} color={colors.button} />
               )}
             </Pressable>
           </View>
@@ -285,6 +320,9 @@ export default function PetDetailPage() {
                       // Avbryt: forkast endringer
                       setEditName(pet.name ?? "");
                       setEditType(pet.type ?? "");
+                      setEditWeight(pet.weight ?? "");
+                      setEditGender(pet.gender ?? "");
+                      setEditAge(pet.age ?? "");
                       setIsEditingPetInfo(false);
                     }}
                   >
@@ -313,6 +351,9 @@ export default function PetDetailPage() {
                   if (!isEditingPetInfo) {
                     setEditName(pet.name ?? "");
                     setEditType(pet.type ?? "");
+                    setEditWeight(pet.weight ?? "");
+                    setEditGender(pet.gender ?? "");
+                    setEditAge(pet.age ?? "");
                     setIsEditingPetInfo(true);
                     return;
                   }
@@ -336,7 +377,7 @@ export default function PetDetailPage() {
                         { fontWeight: "600" },
                       ]}
                     >
-                      {isSavingPetInfo ? "Lagrer..." : "Save"}
+                      {isSavingPetInfo ? "Saving..." : "Save"}
                     </Text>
                   </View>
                 ) : (
@@ -360,7 +401,7 @@ export default function PetDetailPage() {
             {/* Name */}
             <View style={styles.basicItem}>
               <View style={rowStyles.rowIconWrap}>
-                <Feather name="user" size={16} color={colors.button} />
+                <FontAwesome name="paw" size={16} color={colors.button} />
               </View>
 
               <View style={{ flex: 1 }}>
@@ -427,6 +468,132 @@ export default function PetDetailPage() {
                       ]}
                     >
                       Type
+                    </Text>
+                  </>
+                )}
+              </View>
+            </View>
+
+            {/* Weight */}
+            <View style={styles.basicItem}>
+              <View style={rowStyles.rowIconWrap}>
+                <FontAwesome6
+                  name="weight-scale"
+                  size={16}
+                  color={colors.button}
+                />
+              </View>
+
+              <View style={{ flex: 1 }}>
+                {isEditingPetInfo ? (
+                  <TextInput
+                    style={[
+                      inputStyles.input,
+                      { fontSize: 14 },
+                      { padding: 8 },
+                    ]}
+                    value={editWeight}
+                    onChangeText={setEditWeight}
+                    placeholder="Weight"
+                    editable={!isSavingPetInfo}
+                  />
+                ) : (
+                  <>
+                    <Text style={textStyles.sectionTitle} numberOfLines={1}>
+                      {pet.weight}
+                    </Text>
+                    <Text
+                      style={[
+                        { fontSize: 12 },
+                        { color: colors.textSecondary },
+                        { marginBottom: 2 },
+                      ]}
+                    >
+                      Weight
+                    </Text>
+                  </>
+                )}
+              </View>
+            </View>
+
+            {/* Gender */}
+            <View style={styles.basicItem}>
+              <View style={rowStyles.rowIconWrap}>
+                <MaterialCommunityIcons
+                  name="gender-female"
+                  size={16}
+                  color={colors.button}
+                />
+              </View>
+
+              <View style={{ flex: 1 }}>
+                {isEditingPetInfo ? (
+                  <TextInput
+                    style={[
+                      inputStyles.input,
+                      { fontSize: 14 },
+                      { padding: 8 },
+                    ]}
+                    value={editGender}
+                    onChangeText={setEditGender}
+                    placeholder="Gender"
+                    editable={!isSavingPetInfo}
+                  />
+                ) : (
+                  <>
+                    <Text style={textStyles.sectionTitle} numberOfLines={1}>
+                      {pet.gender}
+                    </Text>
+                    <Text
+                      style={[
+                        { fontSize: 12 },
+                        { color: colors.textSecondary },
+                        { marginBottom: 2 },
+                      ]}
+                    >
+                      Gender
+                    </Text>
+                  </>
+                )}
+              </View>
+            </View>
+
+            {/* Age */}
+            <View style={styles.basicItem}>
+              <View style={rowStyles.rowIconWrap}>
+                <FontAwesome6
+                  name="hand-holding-heart"
+                  size={16}
+                  color={colors.button}
+                />
+              </View>
+
+              <View style={{ flex: 1 }}>
+                {isEditingPetInfo ? (
+                  <TextInput
+                    style={[
+                      inputStyles.input,
+                      { fontSize: 14 },
+                      { padding: 8 },
+                    ]}
+                    value={editAge}
+                    onChangeText={setEditAge}
+                    placeholder="Age"
+                    editable={!isSavingPetInfo}
+                  />
+                ) : (
+                  <>
+                    <Text style={textStyles.sectionTitle} numberOfLines={1}>
+                      {pet.age}
+                    </Text>
+                    <Text
+                      style={[
+                        { fontSize: 12 },
+                        { color: colors.textSecondary },
+                        { marginBottom: 2 },
+                      ]}
+                    >
+                      Age
                     </Text>
                   </>
                 )}

@@ -12,7 +12,7 @@ export const colors = {
 
   shadow: "#000",
 
-  button: "#007AFF",
+  button: "#298135",
 
   placeholder: "#3E3E3E",
 

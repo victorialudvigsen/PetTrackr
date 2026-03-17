@@ -79,7 +79,13 @@ export async function setPetPhotoUrl(
 export async function updatePetBasicInfo(
   userId: string,
   petId: string,
-  data: { name: string; type: string },
+  data: {
+    name: string;
+    type: string;
+    weight: string;
+    gender: string;
+    age: string;
+  },
 ) {
   try {
     await setDoc(doc(db, "users", userId, "pets", petId), data, {

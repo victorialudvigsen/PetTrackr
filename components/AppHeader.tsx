@@ -1,4 +1,5 @@
 import HeaderMenuButton from "@/components/HeaderMenuButton";
+import { colors } from "@/styles/colors";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -29,7 +30,7 @@ export default function AppHeader({
       {/* BACK */}
       {showBack !== false ? (
         <Pressable style={styles.backButton} onPress={onBack} hitSlop={8}>
-          <Feather name="chevron-left" size={22} color="#111" />
+          <Feather name="chevron-left" size={22} color={colors.button} />
         </Pressable>
       ) : (
         <View style={{ width: 40 }} />
@@ -77,7 +78,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 22,
     fontWeight: "700",
-    color: "#111",
+    color: colors.button,
     marginLeft: 4,
   },
 

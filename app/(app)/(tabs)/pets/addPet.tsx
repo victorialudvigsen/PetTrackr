@@ -3,12 +3,13 @@ import * as petApi from "@/api/petApi";
 import { useAuthSession } from "@/providers/authctx";
 import { buttonStyles } from "@/styles/buttonStyles";
 import { cardStyles } from "@/styles/cardStyles";
+import { colors } from "@/styles/colors";
 import { inputStyles } from "@/styles/inputStyles";
 import { layoutStyles } from "@/styles/layoutStyles";
 import { textStyles } from "@/styles/textStyles";
 import { pickProfilePicture } from "@/utils/pickProfilePicture";
 import { Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -28,17 +29,38 @@ export default function AddPetPage() {
   const [name, setName] = useState("");
   const [type, setType] = useState("");
   const [petImageUri, setPetImageUri] = useState<string | null>(null);
+  const [weight, setWeight] = useState("");
+  const [gender, setGender] = useState("");
+  const [age, setAge] = useState("");
 
   const [isSaving, setIsSaving] = useState(false);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // RESET FELTER hver gang siden åpnes
+      setName("");
+      setType("");
+      setWeight("");
+      setGender("");
+      setAge("");
+      setPetImageUri(null);
+    }, []),
+  );
 
   const onSave = async () => {
     if (!user?.uid) return;
 
     const cleanName = name.trim();
     const cleanType = type.trim();
+    const cleanWeight = weight.trim();
+    const cleanGender = gender.trim();
+    const cleanAge = age.trim();
 
-    if (!cleanName || !cleanType) {
-      Alert.alert("Mangler info", "Fyll inn navn og type før du lagrer.");
+    if (!cleanName || !cleanType || !cleanWeight || !cleanGender || !cleanAge) {
+      Alert.alert(
+        "Missing information",
+        "Please complete all required fields before saving.",
+      );
       return;
     }
 
@@ -49,10 +71,13 @@ export default function AddPetPage() {
       const newPetId = await petApi.createPet(user.uid, {
         name: cleanName,
         type: cleanType,
+        weight: cleanWeight,
+        gender: cleanGender,
+        age: cleanAge,
       });
 
       if (!newPetId) {
-        Alert.alert("Feil", "Kunne ikke lagre dyret. Prøv igjen.");
+        Alert.alert("Error", "Unable to save the animal. Please try again");
         return;
       }
 
@@ -73,7 +98,7 @@ export default function AddPetPage() {
       router.replace("/profile");
     } catch (e) {
       console.log("Create pet failed:", e);
-      Alert.alert("Feil", "Noe gikk galt. Prøv igjen.");
+      Alert.alert("Error", "Something went wrong. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -87,10 +112,18 @@ export default function AddPetPage() {
           style={buttonStyles.backButton}
           onPress={() => router.replace("/profile")}
         >
-          <Feather name="chevron-left" size={26} color="#111" />
+          <Feather name="chevron-left" size={26} color={colors.button} />
         </Pressable>
 
-        <Text style={[textStyles.pageTitle, { fontSize: 22 }]}>Add Pet</Text>
+        <Text
+          style={[
+            textStyles.pageTitle,
+            { fontSize: 22 },
+            { color: colors.button },
+          ]}
+        >
+          Add Pet
+        </Text>
 
         <View style={{ width: 40 }} />
       </View>
@@ -112,7 +145,7 @@ export default function AddPetPage() {
               <Image source={{ uri: petImageUri }} style={styles.photoImg} />
             ) : (
               <View style={styles.photoPlaceholder}>
-                <Feather name="image" size={18} color="#666" />
+                <Feather name="image" size={18} color={colors.textSecondary} />
               </View>
             )}
           </View>
@@ -124,7 +157,7 @@ export default function AddPetPage() {
             </Text>
           </View>
 
-          <Feather name="chevron-right" size={20} color="#111" />
+          <Feather name="chevron-right" size={20} color={colors.button} />
         </Pressable>
 
         <View style={cardStyles.divider} />
@@ -144,6 +177,33 @@ export default function AddPetPage() {
           value={type}
           onChangeText={setType}
           placeholder="e.g. Dog"
+          editable={!isSaving}
+        />
+
+        <Text style={textStyles.label}>Weight</Text>
+        <TextInput
+          style={[inputStyles.input, { fontSize: 14 }]}
+          value={weight}
+          onChangeText={setWeight}
+          placeholder="e.g. 5 kg"
+          editable={!isSaving}
+        />
+
+        <Text style={textStyles.label}>Gender</Text>
+        <TextInput
+          style={[inputStyles.input, { fontSize: 14 }]}
+          value={gender}
+          onChangeText={setGender}
+          placeholder="e.g. Male"
+          editable={!isSaving}
+        />
+
+        <Text style={textStyles.label}>Age</Text>
+        <TextInput
+          style={[inputStyles.input, { fontSize: 14 }]}
+          value={age}
+          onChangeText={setAge}
+          placeholder="e.g. 3"
           editable={!isSaving}
         />
 

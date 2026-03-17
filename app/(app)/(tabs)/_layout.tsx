@@ -1,3 +1,4 @@
+import { colors } from "@/styles/colors";
 import Entypo from "@expo/vector-icons/Entypo";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Tabs } from "expo-router";
@@ -6,7 +7,13 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 export default function TabsLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Tabs screenOptions={{ headerShown: false }}>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: colors.button,
+          tabBarInactiveTintColor: colors.textSecondary,
+        }}
+      >
         <Tabs.Screen
           name="index"
           options={{
@@ -20,7 +27,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="profile"
           options={{
-            title: "Profil",
+            title: "Profile",
             tabBarIcon: ({ color }) => (
               <FontAwesome name="user" size={24} color={color} />
             ),
