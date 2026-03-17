@@ -15,10 +15,15 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 
@@ -105,122 +110,142 @@ export default function AddPetPage() {
   };
 
   return (
-    <View style={[layoutStyles.screen, { padding: 16 }]}>
-      {/* HEADER */}
-      <View style={layoutStyles.header}>
-        <Pressable
-          style={buttonStyles.backButton}
-          onPress={() => router.replace("/profile")}
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          contentContainerStyle={{ padding: 18, paddingBottom: 200 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <Feather name="chevron-left" size={26} color={colors.button} />
-        </Pressable>
+          {/* HEADER */}
+          <View style={layoutStyles.header}>
+            <Pressable
+              style={buttonStyles.backButton}
+              onPress={() => router.replace("/profile")}
+            >
+              <Feather name="chevron-left" size={26} color={colors.button} />
+            </Pressable>
 
-        <Text
-          style={[
-            textStyles.pageTitle,
-            { fontSize: 22 },
-            { color: colors.button },
-          ]}
-        >
-          Add Pet
-        </Text>
+            <Text
+              style={[
+                textStyles.pageTitle,
+                { fontSize: 22 },
+                { color: colors.button },
+              ]}
+            >
+              Add Pet
+            </Text>
 
-        <View style={{ width: 40 }} />
-      </View>
+            <View style={{ width: 40 }} />
+          </View>
 
-      {/* CONTENT */}
-      <View style={[cardStyles.card, { gap: 10 }]}>
-        {/* PHOTO PICKER */}
-        <Pressable
-          style={styles.photoRow}
-          onPress={async () => {
-            const uri = await pickProfilePicture();
-            if (!uri) return;
-            setPetImageUri(uri);
-          }}
-          disabled={isSaving}
-        >
-          <View style={styles.photoPreview}>
-            {petImageUri ? (
-              <Image source={{ uri: petImageUri }} style={styles.photoImg} />
-            ) : (
-              <View style={styles.photoPlaceholder}>
-                <Feather name="image" size={18} color={colors.textSecondary} />
+          {/* CONTENT */}
+          <View style={[cardStyles.card, { gap: 10 }]}>
+            {/* PHOTO PICKER */}
+            <Pressable
+              style={styles.photoRow}
+              onPress={async () => {
+                const uri = await pickProfilePicture();
+                if (!uri) return;
+                setPetImageUri(uri);
+              }}
+              disabled={isSaving}
+            >
+              <View style={styles.photoPreview}>
+                {petImageUri ? (
+                  <Image
+                    source={{ uri: petImageUri }}
+                    style={styles.photoImg}
+                  />
+                ) : (
+                  <View style={styles.photoPlaceholder}>
+                    <Feather
+                      name="image"
+                      size={18}
+                      color={colors.textSecondary}
+                    />
+                  </View>
+                )}
               </View>
-            )}
+
+              <View style={{ flex: 1 }}>
+                <Text style={textStyles.sectionTitle}>Pet photo</Text>
+                <Text style={textStyles.dateTextLarge}>
+                  {petImageUri ? "Tap to change" : "Tap to add"}
+                </Text>
+              </View>
+
+              <Feather name="chevron-right" size={20} color={colors.button} />
+            </Pressable>
+
+            <View style={cardStyles.divider} />
+
+            <Text style={textStyles.label}>Name</Text>
+            <TextInput
+              style={[inputStyles.input, { fontSize: 14 }]}
+              value={name}
+              onChangeText={setName}
+              placeholder="e.g. Lasse"
+              editable={!isSaving}
+            />
+
+            <Text style={textStyles.label}>Type</Text>
+            <TextInput
+              style={[inputStyles.input, { fontSize: 14 }]}
+              value={type}
+              onChangeText={setType}
+              placeholder="e.g. Dog"
+              editable={!isSaving}
+            />
+
+            <Text style={textStyles.label}>Weight</Text>
+            <TextInput
+              style={[inputStyles.input, { fontSize: 14 }]}
+              value={weight}
+              onChangeText={setWeight}
+              placeholder="e.g. 5 kg"
+              editable={!isSaving}
+            />
+
+            <Text style={textStyles.label}>Gender</Text>
+            <TextInput
+              style={[inputStyles.input, { fontSize: 14 }]}
+              value={gender}
+              onChangeText={setGender}
+              placeholder="e.g. Male"
+              editable={!isSaving}
+            />
+
+            <Text style={textStyles.label}>Age</Text>
+            <TextInput
+              style={[inputStyles.input, { fontSize: 14 }]}
+              value={age}
+              onChangeText={setAge}
+              placeholder="e.g. 3"
+              editable={!isSaving}
+            />
+
+            <Pressable
+              style={[buttonStyles.saveButton, { opacity: isSaving ? 0.7 : 1 }]}
+              onPress={onSave}
+              disabled={isSaving}
+            >
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+              >
+                {isSaving && <ActivityIndicator size="small" />}
+                <Text style={buttonStyles.saveButtonText}>
+                  {isSaving ? "Saving..." : "Save pet"}
+                </Text>
+              </View>
+            </Pressable>
           </View>
-
-          <View style={{ flex: 1 }}>
-            <Text style={textStyles.sectionTitle}>Pet photo</Text>
-            <Text style={textStyles.dateTextLarge}>
-              {petImageUri ? "Tap to change" : "Tap to add"}
-            </Text>
-          </View>
-
-          <Feather name="chevron-right" size={20} color={colors.button} />
-        </Pressable>
-
-        <View style={cardStyles.divider} />
-
-        <Text style={textStyles.label}>Name</Text>
-        <TextInput
-          style={[inputStyles.input, { fontSize: 14 }]}
-          value={name}
-          onChangeText={setName}
-          placeholder="e.g. Lasse"
-          editable={!isSaving}
-        />
-
-        <Text style={textStyles.label}>Type</Text>
-        <TextInput
-          style={[inputStyles.input, { fontSize: 14 }]}
-          value={type}
-          onChangeText={setType}
-          placeholder="e.g. Dog"
-          editable={!isSaving}
-        />
-
-        <Text style={textStyles.label}>Weight</Text>
-        <TextInput
-          style={[inputStyles.input, { fontSize: 14 }]}
-          value={weight}
-          onChangeText={setWeight}
-          placeholder="e.g. 5 kg"
-          editable={!isSaving}
-        />
-
-        <Text style={textStyles.label}>Gender</Text>
-        <TextInput
-          style={[inputStyles.input, { fontSize: 14 }]}
-          value={gender}
-          onChangeText={setGender}
-          placeholder="e.g. Male"
-          editable={!isSaving}
-        />
-
-        <Text style={textStyles.label}>Age</Text>
-        <TextInput
-          style={[inputStyles.input, { fontSize: 14 }]}
-          value={age}
-          onChangeText={setAge}
-          placeholder="e.g. 3"
-          editable={!isSaving}
-        />
-
-        <Pressable
-          style={[buttonStyles.saveButton, { opacity: isSaving ? 0.7 : 1 }]}
-          onPress={onSave}
-          disabled={isSaving}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            {isSaving && <ActivityIndicator size="small" />}
-            <Text style={buttonStyles.saveButtonText}>
-              {isSaving ? "Saving..." : "Save pet"}
-            </Text>
-          </View>
-        </Pressable>
-      </View>
-    </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
