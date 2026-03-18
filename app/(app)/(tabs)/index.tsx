@@ -53,10 +53,18 @@ export default function HomePage() {
   } | null>(null);
 
   useEffect(() => {
-    if (pets.length > 0 && !activePetId) {
-      setActivePetId(pets[0].id);
+    if (pets.length > 0) {
+      // Hvis aktivt dyr ikke finnes i lista → sett nytt
+      const exists = pets.find((p) => p.id === activePetId);
+
+      if (!exists) {
+        setActivePetId(pets[0].id);
+      }
+    } else {
+      // Hvis alle dyr er slettet
+      setActivePetId(null);
     }
-  }, [pets, activePetId]);
+  }, [pets]);
 
   // Henter pets
   useFocusEffect(
@@ -78,7 +86,9 @@ export default function HomePage() {
   useFocusEffect(
     useCallback(() => {
       if (user) {
-        setLocalDisplayName(user.displayName ?? user.email ?? null);
+        setLocalDisplayName(
+          user.displayName || user.email?.split("@")[0] || null,
+        );
       }
     }, [user]),
   );
@@ -184,7 +194,9 @@ export default function HomePage() {
               { marginBottom: 8 },
             ]}
           >
-            {pets.length} pets
+            {pets.length === 0
+              ? "No pets"
+              : `${pets.length} ${pets.length === 1 ? "pet" : "pets"}`}
           </Text>
         </View>
 
@@ -355,14 +367,70 @@ export default function HomePage() {
           </View>
         )}
 
-        {/* TODAY CARD */}
-        <View style={cardStyles.card}>
-          <Text style={[textStyles.sectionTitle, { marginBottom: 8 }]}>
-            Today
-          </Text>
-          <View style={cardStyles.divider} />
+        {pets.length === 0 && (
+          <View style={cardStyles.card}>
+            <Text
+              style={[
+                textStyles.sectionTitle,
+                { marginBottom: 6 },
+                { textAlign: "center" },
+              ]}
+            >
+              No pets yet
+            </Text>
 
-          {nextReminder ? (
+            <Text
+              style={[
+                textStyles.pageSubtitle,
+                { textAlign: "center" },
+                { marginBottom: 14 },
+              ]}
+            >
+              You haven’t added any pets yet. Tap below to get started.
+            </Text>
+
+            <Pressable
+              style={buttonStyles.saveButton}
+              onPress={() => router.push("/pets/addPet")}
+            >
+              <Text style={buttonStyles.saveButtonText}>Add Pet</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* TODAY CARD */}
+        {pets.length > 0 && (
+          <View style={cardStyles.card}>
+            <Text style={[textStyles.sectionTitle, { marginBottom: 8 }]}>
+              Today
+            </Text>
+            <View style={cardStyles.divider} />
+
+            {nextReminder ? (
+              <Text
+                style={[
+                  textStyles.pageSubtitle,
+                  { marginTop: 0 },
+                  { marginBottom: 8 },
+                ]}
+              >
+                • {nextReminder.name} at{" "}
+                {nextReminder.remindAt.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </Text>
+            ) : (
+              <Text
+                style={[
+                  textStyles.pageSubtitle,
+                  { marginTop: 0 },
+                  { marginBottom: 8 },
+                ]}
+              >
+                • No medication reminders
+              </Text>
+            )}
             <Text
               style={[
                 textStyles.pageSubtitle,
@@ -370,106 +438,80 @@ export default function HomePage() {
                 { marginBottom: 8 },
               ]}
             >
-              • {nextReminder.name} at{" "}
-              {nextReminder.remindAt.toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              • No vet visits today (Coming soon)
             </Text>
-          ) : (
-            <Text
-              style={[
-                textStyles.pageSubtitle,
-                { marginTop: 0 },
-                { marginBottom: 8 },
-              ]}
-            >
-              • No medication reminders
-            </Text>
-          )}
-          <Text
-            style={[
-              textStyles.pageSubtitle,
-              { marginTop: 0 },
-              { marginBottom: 8 },
-            ]}
-          >
-            • No vet visits today (Coming soon)
-          </Text>
-        </View>
+          </View>
+        )}
 
         {/* RECENT ACTIVITY */}
-        <View style={cardStyles.card}>
-          <Text style={[textStyles.sectionTitle, { marginBottom: 8 }]}>
-            Recent Activity
-          </Text>
-          <View style={cardStyles.divider} />
+        {pets.length > 0 && (
+          <View style={cardStyles.card}>
+            <Text style={[textStyles.sectionTitle, { marginBottom: 8 }]}>
+              Recent Activity
+            </Text>
+            <View style={cardStyles.divider} />
 
-          {latestWalk ? (
-            <Text
-              style={[
-                textStyles.pageSubtitle,
-                { marginTop: 0 },
-                { marginBottom: 8 },
-              ]}
-            >
-              🐾 Walk – {latestWalk.duration} min
-            </Text>
-          ) : (
-            <Text
-              style={[
-                textStyles.pageSubtitle,
-                { marginTop: 0 },
-                { marginBottom: 8 },
-              ]}
-            >
-              🐾 No walks yet
-            </Text>
-          )}
+            {latestWalk ? (
+              <Text
+                style={[
+                  textStyles.pageSubtitle,
+                  { marginTop: 0, marginBottom: 8 },
+                ]}
+              >
+                🐾 Walk – {latestWalk.duration} min
+              </Text>
+            ) : (
+              <Text
+                style={[
+                  textStyles.pageSubtitle,
+                  { marginTop: 0, marginBottom: 8 },
+                ]}
+              >
+                🐾 No walks yet
+              </Text>
+            )}
 
-          {latestMeal ? (
-            <Text
-              style={[
-                textStyles.pageSubtitle,
-                { marginTop: 0 },
-                { marginBottom: 8 },
-              ]}
-            >
-              🍖 Food – {latestMeal.grams} g
-            </Text>
-          ) : (
-            <Text
-              style={[
-                textStyles.pageSubtitle,
-                { marginTop: 0 },
-                { marginBottom: 8 },
-              ]}
-            >
-              🍖 No meals yet
-            </Text>
-          )}
-          {latestMeds ? (
-            <Text
-              style={[
-                textStyles.pageSubtitle,
-                { marginTop: 0 },
-                { marginBottom: 8 },
-              ]}
-            >
-              💊 Meds – {latestMeds?.name}{" "}
-            </Text>
-          ) : (
-            <Text
-              style={[
-                textStyles.pageSubtitle,
-                { marginTop: 0 },
-                { marginBottom: 8 },
-              ]}
-            >
-              💊 No medication yet
-            </Text>
-          )}
-        </View>
+            {latestMeal ? (
+              <Text
+                style={[
+                  textStyles.pageSubtitle,
+                  { marginTop: 0, marginBottom: 8 },
+                ]}
+              >
+                🍖 Food – {latestMeal.grams} g
+              </Text>
+            ) : (
+              <Text
+                style={[
+                  textStyles.pageSubtitle,
+                  { marginTop: 0, marginBottom: 8 },
+                ]}
+              >
+                🍖 No meals yet
+              </Text>
+            )}
+
+            {latestMeds ? (
+              <Text
+                style={[
+                  textStyles.pageSubtitle,
+                  { marginTop: 0, marginBottom: 8 },
+                ]}
+              >
+                💊 Meds – {latestMeds?.name}
+              </Text>
+            ) : (
+              <Text
+                style={[
+                  textStyles.pageSubtitle,
+                  { marginTop: 0, marginBottom: 8 },
+                ]}
+              >
+                💊 No medication yet
+              </Text>
+            )}
+          </View>
+        )}
 
         <View style={{ height: 24 }} />
       </ScrollView>

@@ -5,7 +5,7 @@ import { Text, View } from "react-native";
 import "react-native-reanimated";
 
 export default function RootLayout() {
-  const { userNameSession, isLoading } = useAuthSession();
+  const { user, isLoading } = useAuthSession();
 
   if (isLoading) {
     return (
@@ -15,7 +15,7 @@ export default function RootLayout() {
     );
   }
 
-  if (!userNameSession) {
+  if (!user) {
     return <Redirect href={"/authentication"} />;
   }
 

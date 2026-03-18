@@ -3,6 +3,7 @@ import * as petApi from "@/api/petApi";
 import AppHeader from "@/components/AppHeader";
 import { useAuthSession } from "@/providers/authctx";
 import { cardStyles } from "@/styles/cardStyles";
+import { colors } from "@/styles/colors";
 import { layoutStyles } from "@/styles/layoutStyles";
 import { rowStyles } from "@/styles/rowStyles";
 import { textStyles } from "@/styles/textStyles";
@@ -120,7 +121,11 @@ export default function RemindersPage() {
                     <View key={entry.id} style={rowStyles.row}>
                       <View style={rowStyles.rowLeft}>
                         <View style={rowStyles.rowIconWrap}>
-                          <Feather name="bell" size={16} color="#111" />
+                          <Feather
+                            name="bell"
+                            size={16}
+                            color={colors.button}
+                          />
                         </View>
 
                         <View>

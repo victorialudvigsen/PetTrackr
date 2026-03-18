@@ -200,7 +200,11 @@ export default function MedicPage() {
                           </Text>
 
                           {entry.reminderEnabled ? (
-                            <Feather name="bell" size={14} color="#666" />
+                            <Feather
+                              name="bell"
+                              size={14}
+                              color={colors.button}
+                            />
                           ) : null}
                         </View>
 

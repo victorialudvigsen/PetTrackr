@@ -1,7 +1,12 @@
-import { createUser, setUserDisplayName, signIn, signOut } from "@/api/authApi";
+import { signIn, signOut } from "@/api/authApi";
 import { auth } from "@/firebaseConfig";
 import { useRouter } from "expo-router";
-import { onAuthStateChanged, User } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  updateProfile,
+  User,
+} from "firebase/auth";
 import {
   createContext,
   ReactNode,
@@ -17,7 +22,7 @@ type AuthContextType = {
   createUser: (
     email: string,
     password: string,
-    displayName: string
+    displayName: string,
   ) => Promise<void>;
   userNameSession?: string | null;
   isLoading: boolean;
@@ -46,9 +51,7 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
 
   // Sjekker med Firebase for login/logut-endringer
   useEffect(() => {
-    onAuthStateChanged(auth, (user) => {
-      setIsLoading(true);
-
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUserSession(user.displayName ?? user.email ?? null);
         setUserAuthSession(user);
@@ -59,15 +62,26 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
 
       setIsLoading(false);
     });
+
+    // Rydder opp listener når komponent unmountes
+    return unsubscribe;
   }, []);
 
   // Navigerer automatisk basert på auth-status
   useEffect(() => {
     if (isLoading) return;
 
-    if (userSession) router.replace("/");
-    else router.replace("/authentication");
-  }, [isLoading, userSession]);
+    if (userAuthSession) {
+      router.replace("/");
+    } else {
+      router.replace("/authentication");
+    }
+  }, [isLoading, userAuthSession]);
+
+  // Unngå å rendre app før vi vet auth-status
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <AuthContext.Provider
@@ -75,20 +89,33 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
         signIn: async (email: string, password: string) => {
           await signIn(email, password);
         },
+
         signOut: () => {
           signOut();
         },
+
         createUser: async (
           email: string,
           password: string,
-          displayName: string
+          displayName: string,
         ) => {
-          const newUser = await createUser(email, password);
-          if (newUser) {
-            await setUserDisplayName(newUser, displayName);
-            setUserSession(displayName);
-          }
+          // Oppretter bruker i Firebase
+          const userCredential = await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password,
+          );
+
+          // Setter navn direkte i Firebase
+          await updateProfile(userCredential.user, {
+            displayName: displayName,
+          });
+
+          // Setter lokal session med en gang
+          setUserSession(displayName);
+          setUserAuthSession(userCredential.user);
         },
+
         userNameSession: userSession,
         isLoading,
         user: userAuthSession,
