@@ -6,8 +6,9 @@ import { inputStyles } from "@/styles/inputStyles";
 import { layoutStyles } from "@/styles/layoutStyles";
 import { textStyles } from "@/styles/textStyles";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import * as Notifications from "expo-notifications";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Alert, Pressable, Switch, Text, TextInput, View } from "react-native";
 
 export default function LogMedicPage() {
@@ -24,6 +25,19 @@ export default function LogMedicPage() {
   const [showPicker, setShowPicker] = useState(false);
   const [pickerMode, setPickerMode] = useState<"date" | "time">("date");
 
+  // Ber om tilgang til notifications
+  useEffect(() => {
+    async function requestPermission() {
+      const { status } = await Notifications.requestPermissionsAsync();
+
+      if (status !== "granted") {
+        Alert.alert("Permission needed", "Please allow notifications");
+      }
+    }
+
+    requestPermission();
+  }, []);
+
   /* -------- HANDLE SAVE -------- */
   async function handleSave() {
     if (!user?.uid || !id) return;
@@ -33,6 +47,7 @@ export default function LogMedicPage() {
       return;
     }
 
+    // Lagrer i Firebase
     await medicApi.addMedicEntry(user.uid, id, {
       name: name.trim(),
       dosage: dosage.trim(),
@@ -41,6 +56,21 @@ export default function LogMedicPage() {
       remindAt: reminderEnabled ? remindAt : null,
     });
 
+    // Notifications
+    if (reminderEnabled && remindAt) {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Medication Reminder 💊",
+          body: `${name} – ${dosage}`,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: remindAt,
+        },
+      });
+    }
+
+    // reset
     setName("");
     setDosage("");
     setNote("");
