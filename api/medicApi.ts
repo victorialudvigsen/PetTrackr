@@ -26,6 +26,7 @@ export async function addMedicEntry(
     note?: string;
     remindAt?: Date | null;
     reminderEnabled?: boolean;
+    notificationId?: string | null;
   },
 ) {
   try {

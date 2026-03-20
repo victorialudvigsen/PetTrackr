@@ -15,6 +15,7 @@ import { Feather } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { useFocusEffect } from "@react-navigation/native";
+import * as Notifications from "expo-notifications";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -22,6 +23,7 @@ import {
   Alert,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   View,
 } from "react-native";
@@ -40,7 +42,8 @@ export default function MedicPage() {
   const [meds, setMeds] = useState<MedicEntryData[]>([]);
   const [isLoadingMeds, setIsLoadingMeds] = useState(true);
 
-  async function handleDelete(entryId: string) {
+  /* -------- HANDLE DELETE -------- */
+  async function handleDelete(entry: MedicEntryData) {
     if (!user?.uid || !pet?.id) return;
 
     Alert.alert(
@@ -52,9 +55,17 @@ export default function MedicPage() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
-            await medicApi.deleteMedicEntry(user.uid, pet.id, entryId);
+            // Cancel notification først
+            if (entry.notificationId) {
+              await Notifications.cancelScheduledNotificationAsync(
+                entry.notificationId,
+              );
+            }
 
-            /* Oppdaterer listen etter sletting */
+            // Sletter fra Firebase
+            await medicApi.deleteMedicEntry(user.uid, pet.id, entry.id);
+
+            // Oppdaterer liste
             const updated = await medicApi.getMedicEntries(user.uid, pet.id);
             setMeds(updated);
           },
@@ -100,6 +111,26 @@ export default function MedicPage() {
         <Text style={{ marginTop: 8 }}>Loading medication...</Text>
       </View>
     );
+  }
+
+  /* -------- FORMAT DATE -------- */
+  function formatDate(date: Date) {
+    const today = new Date();
+    const tomorrow = new Date();
+    tomorrow.setDate(today.getDate() + 1);
+
+    const isToday = date.toDateString() === today.toDateString();
+    const isTomorrow = date.toDateString() === tomorrow.toDateString();
+
+    const time = date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    if (isToday) return `Today • ${time}`;
+    if (isTomorrow) return `Tomorrow • ${time}`;
+
+    return `${date.toLocaleDateString()} • ${time}`;
   }
 
   return (
@@ -170,12 +201,13 @@ export default function MedicPage() {
           ) : (
             meds.slice(0, 10).map((entry) => {
               const date = entry.createdAt?.toDate?.() ?? new Date();
+              const reminderDate = entry.remindAt?.toDate?.();
 
               return (
                 /* SwipeDeleteRow håndterer hele swipe-logikken */
                 <SwipeDeleteRow
                   key={entry.id}
-                  onDelete={() => handleDelete(entry.id)}
+                  onDelete={() => handleDelete(entry)}
                 >
                   <View style={rowStyles.row}>
                     <View style={rowStyles.rowLeft}>
@@ -198,26 +230,27 @@ export default function MedicPage() {
                           <Text style={textStyles.rowText}>
                             {entry.name} – {entry.dosage}
                           </Text>
-
-                          {entry.reminderEnabled ? (
-                            <Feather
-                              name="bell"
-                              size={14}
-                              color={colors.button}
-                            />
-                          ) : null}
                         </View>
 
+                        {/* REMINDER */}
+                        {entry.reminderEnabled && reminderDate ? (
+                          <Text style={styles.reminderText}>
+                            ⏰ {formatDate(reminderDate)}
+                          </Text>
+                        ) : (
+                          <Text style={styles.noReminderText}>No reminder</Text>
+                        )}
+
+                        {/* NOTE */}
                         {entry.note ? (
-                          <Text style={textStyles.noteText}>{entry.note}</Text>
+                          <Text style={textStyles.noteText}>
+                            Note: {entry.note}
+                          </Text>
                         ) : null}
 
+                        {/* ADDED DATE */}
                         <Text style={textStyles.dateText}>
-                          {date.toLocaleDateString()} •{" "}
-                          {date.toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          Added {date.toLocaleDateString()}
                         </Text>
                       </View>
                     </View>
@@ -233,3 +266,17 @@ export default function MedicPage() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  reminderText: {
+    fontSize: 13,
+    color: colors.button,
+    marginTop: 2,
+  },
+
+  noReminderText: {
+    fontSize: 13,
+    color: "#999",
+    marginTop: 2,
+  },
+});

@@ -47,18 +47,11 @@ export default function LogMedicPage() {
       return;
     }
 
-    // Lagrer i Firebase
-    await medicApi.addMedicEntry(user.uid, id, {
-      name: name.trim(),
-      dosage: dosage.trim(),
-      note: note.trim() || undefined,
-      reminderEnabled,
-      remindAt: reminderEnabled ? remindAt : null,
-    });
+    // Lager notification først
+    let notificationId: string | null = null;
 
-    // Notifications
     if (reminderEnabled && remindAt) {
-      await Notifications.scheduleNotificationAsync({
+      notificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title: "Medication Reminder 💊",
           body: `${name} – ${dosage}`,
@@ -69,6 +62,16 @@ export default function LogMedicPage() {
         },
       });
     }
+
+    // Lagrer i Firebase
+    await medicApi.addMedicEntry(user.uid, id, {
+      name: name.trim(),
+      dosage: dosage.trim(),
+      note: note.trim() || undefined,
+      reminderEnabled,
+      remindAt: reminderEnabled ? remindAt : null,
+      notificationId,
+    });
 
     // reset
     setName("");

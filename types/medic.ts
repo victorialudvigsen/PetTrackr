@@ -11,4 +11,6 @@ export type MedicEntryData = {
 
   remindAt?: Timestamp | null;
   reminderEnabled?: boolean;
+
+  notificationId?: string | null;
 };
