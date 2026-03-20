@@ -235,7 +235,13 @@ export default function MedicPage() {
                         {/* REMINDER */}
                         {entry.reminderEnabled && reminderDate ? (
                           <Text style={styles.reminderText}>
-                            ⏰ {formatDate(reminderDate)}
+                            ⏰{" "}
+                            {entry.repeatType === "daily"
+                              ? `Daily • ${reminderDate.toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}`
+                              : formatDate(reminderDate)}
                           </Text>
                         ) : (
                           <Text style={styles.noReminderText}>No reminder</Text>

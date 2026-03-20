@@ -9,7 +9,17 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Notifications from "expo-notifications";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, Pressable, Switch, Text, TextInput, View } from "react-native";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 export default function LogMedicPage() {
   const router = useRouter();
@@ -24,6 +34,7 @@ export default function LogMedicPage() {
   const [remindAt, setRemindAt] = useState<Date | null>(null);
   const [showPicker, setShowPicker] = useState(false);
   const [pickerMode, setPickerMode] = useState<"date" | "time">("date");
+  const [repeatType, setRepeatType] = useState<"once" | "daily">("once");
 
   // Ber om tilgang til notifications
   useEffect(() => {
@@ -71,6 +82,7 @@ export default function LogMedicPage() {
       reminderEnabled,
       remindAt: reminderEnabled ? remindAt : null,
       notificationId,
+      repeatType,
     });
 
     // reset
@@ -86,7 +98,10 @@ export default function LogMedicPage() {
   }
 
   return (
-    <View style={layoutStyles.screen}>
+    <KeyboardAvoidingView
+      style={layoutStyles.screen}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
       <AppHeader
         title="Log Medication"
         onBack={() =>
@@ -97,7 +112,11 @@ export default function LogMedicPage() {
         }
       />
 
-      <View style={layoutStyles.content}>
+      <ScrollView
+        contentContainerStyle={[layoutStyles.content, { paddingBottom: 40 }]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={textStyles.rowText}>Medication name</Text>
         <TextInput
           style={inputStyles.input}
@@ -144,6 +163,7 @@ export default function LogMedicPage() {
 
         {reminderEnabled ? (
           <>
+            {/* DATE & TIME */}
             <Pressable
               style={buttonStyles.dateButton}
               onPress={() => setShowPicker(true)}
@@ -160,6 +180,21 @@ export default function LogMedicPage() {
               </Text>
             </Pressable>
 
+            {/* REPEAT */}
+            <Text style={[textStyles.rowText, { marginTop: 12 }]}>Repeat</Text>
+
+            <Pressable
+              style={buttonStyles.dateButton}
+              onPress={() =>
+                setRepeatType((prev) => (prev === "once" ? "daily" : "once"))
+              }
+            >
+              <Text style={buttonStyles.dateButtonText}>
+                {repeatType === "once" ? "Once" : "Daily"}
+              </Text>
+            </Pressable>
+
+            {/* DATE PICKER */}
             {showPicker && (
               <DateTimePicker
                 value={remindAt ?? new Date()}
@@ -174,14 +209,10 @@ export default function LogMedicPage() {
                   if (!selectedDate) return;
 
                   if (pickerMode === "date") {
-                    // Lagrer dato
                     setRemindAt(selectedDate);
-
-                    // Åpner time picker
                     setPickerMode("time");
                     setShowPicker(true);
                   } else {
-                    // Kombinerer dato + klokkeslett
                     const current = remindAt ?? new Date();
                     const combined = new Date(current);
 
@@ -198,10 +229,11 @@ export default function LogMedicPage() {
             )}
           </>
         ) : null}
+
         <Pressable style={buttonStyles.saveButton} onPress={handleSave}>
           <Text style={buttonStyles.saveButtonText}>Save Medication</Text>
         </Pressable>
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

@@ -27,6 +27,7 @@ export async function addMedicEntry(
     remindAt?: Date | null;
     reminderEnabled?: boolean;
     notificationId?: string | null;
+    repeatType?: "once" | "daily";
   },
 ) {
   try {
@@ -39,6 +40,8 @@ export async function addMedicEntry(
       // Reminder (lagres bare hvis sendt inn)
       reminderEnabled: data.reminderEnabled ?? false,
       remindAt: data.remindAt ?? null,
+      notificationId: data.notificationId ?? null,
+      repeatType: data.repeatType ?? "once",
     });
 
     return ref.id;

@@ -13,4 +13,5 @@ export type MedicEntryData = {
   reminderEnabled?: boolean;
 
   notificationId?: string | null;
+  repeatType?: "once" | "daily";
 };
