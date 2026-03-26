@@ -1,4 +1,5 @@
 import { db } from "@/firebaseConfig";
+import { WalkData } from "@/types/walk";
 import {
   addDoc,
   collection,
@@ -16,10 +17,22 @@ function walkCollection(userId: string, petId: string) {
 }
 
 // 1) Legger til walk (duration + createdAt)
-export async function addWalk(userId: string, petId: string, duration: number) {
+export async function addWalk(
+  userId: string,
+  petId: string,
+  data: {
+    duration: number;
+    note?: string;
+    type?: "quick" | "long" | "exercise" | "night";
+    mood?: "happy" | "calm" | "energetic" | "tired";
+  },
+) {
   try {
     const ref = await addDoc(walkCollection(userId, petId), {
-      duration,
+      duration: data.duration,
+      note: data.note ?? null,
+      type: data.type ?? null,
+      mood: data.mood ?? null,
       createdAt: serverTimestamp(),
     });
     return ref.id;
@@ -30,7 +43,10 @@ export async function addWalk(userId: string, petId: string, duration: number) {
 }
 
 // 2) Henter walks (nyeste først)
-export async function getWalks(userId: string, petId: string) {
+export async function getWalks(
+  userId: string,
+  petId: string,
+): Promise<WalkData[]> {
   try {
     const q = query(
       walkCollection(userId, petId),
@@ -39,10 +55,13 @@ export async function getWalks(userId: string, petId: string) {
 
     const snap = await getDocs(q);
 
-    return snap.docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-    }));
+    return snap.docs.map(
+      (d) =>
+        ({
+          id: d.id,
+          ...(d.data() as Omit<WalkData, "id">),
+        }) as WalkData,
+    );
   } catch (e) {
     console.log("Error getting walks:", e);
     return [];

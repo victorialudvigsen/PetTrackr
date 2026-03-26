@@ -10,6 +10,7 @@ import { layoutStyles } from "@/styles/layoutStyles";
 import { rowStyles } from "@/styles/rowStyles";
 import { textStyles } from "@/styles/textStyles";
 import { PetData } from "@/types/pet";
+import { WalkData } from "@/types/walk";
 import { Feather, FontAwesome5 } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -34,8 +35,18 @@ export default function PetActivityPage() {
   const [pet, setPet] = useState<PetData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [walks, setWalks] = useState<any[]>([]);
+  const [walks, setWalks] = useState<WalkData[]>([]);
   const [isLoadingWalks, setIsLoadingWalks] = useState(true);
+
+  const [todaySummary, setTodaySummary] = useState<{
+    count: number;
+    totalMinutes: number;
+    latestWalk: WalkData | null;
+  }>({
+    count: 0,
+    totalMinutes: 0,
+    latestWalk: null,
+  });
 
   /* -------- DELETE WALK -------- */
 
@@ -80,8 +91,30 @@ export default function PetActivityPage() {
 
         setIsLoadingWalks(true);
 
-        const result = await walkApi.getWalks(user.uid, id);
+        const result: WalkData[] = await walkApi.getWalks(user.uid, id);
         setWalks(result ?? []);
+
+        const today = new Date();
+
+        const isSameDay = (d1: Date, d2: Date) =>
+          d1.getDate() === d2.getDate() &&
+          d1.getMonth() === d2.getMonth() &&
+          d1.getFullYear() === d2.getFullYear();
+
+        const todayWalks = (result ?? []).filter((walk: WalkData) => {
+          const date = walk.createdAt?.toDate?.();
+          return date && isSameDay(date, today);
+        });
+
+        const totalMinutes = todayWalks.reduce(
+          (sum: number, w: WalkData) => sum + (w.duration || 0),
+          0,
+        );
+        setTodaySummary({
+          count: todayWalks.length,
+          totalMinutes,
+          latestWalk: todayWalks[0] ?? null,
+        });
 
         setIsLoadingWalks(false);
       }
@@ -97,6 +130,27 @@ export default function PetActivityPage() {
         <Text style={{ marginTop: 8 }}>Loading activity...</Text>
       </View>
     );
+  }
+
+  /* -------- FORMAT DATE -------- */
+  function formatDate(date: Date) {
+    const today = new Date();
+    const tomorrow = new Date();
+
+    tomorrow.setDate(today.getDate() + 1);
+
+    const isToday = date.toDateString() === today.toDateString();
+    const isTomorrow = date.toDateString() === tomorrow.toDateString();
+
+    const time = date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    if (isToday) return `Today • ${time}`;
+    if (isTomorrow) return `Tomorrow • ${time}`;
+
+    return `${date.toLocaleDateString()} • ${time}`;
   }
 
   return (
@@ -156,8 +210,57 @@ export default function PetActivityPage() {
           </View>
         </View>
 
-        {/* RECENT WALKS */}
+        {/* TODAY SUMMARY */}
         <View style={cardStyles.card}>
+          <Text style={textStyles.sectionTitle}>Today</Text>
+          <View style={cardStyles.divider} />
+
+          {todaySummary.count === 0 ? (
+            <Text style={textStyles.emptyText}>No walks today</Text>
+          ) : (
+            <>
+              <Text style={textStyles.pageSubtitle}>
+                🐾 {todaySummary.count} walk
+                {todaySummary.count > 1 ? "s" : ""}
+              </Text>
+
+              <Text style={textStyles.pageSubtitle}>
+                ⏱️ {todaySummary.totalMinutes} min
+              </Text>
+
+              {todaySummary.latestWalk && (
+                <Text style={textStyles.pageSubtitle}>
+                  {todaySummary.latestWalk.type && (
+                    <>
+                      {todaySummary.latestWalk.type === "quick" &&
+                        "⚡ Quick walk"}
+                      {todaySummary.latestWalk.type === "long" &&
+                        "🗺️ Long walk"}
+                      {todaySummary.latestWalk.type === "exercise" &&
+                        "🏃 Exercise"}
+                      {todaySummary.latestWalk.type === "night" &&
+                        "🌙 Night walk"}
+                      {" • "}
+                    </>
+                  )}
+
+                  {todaySummary.latestWalk.mood && (
+                    <>
+                      {todaySummary.latestWalk.mood === "happy" && "😊 Happy"}
+                      {todaySummary.latestWalk.mood === "calm" && "😌 Calm"}
+                      {todaySummary.latestWalk.mood === "energetic" &&
+                        "⚡ Energetic"}
+                      {todaySummary.latestWalk.mood === "tired" && "😴 Tired"}
+                    </>
+                  )}
+                </Text>
+              )}
+            </>
+          )}
+        </View>
+
+        {/* RECENT WALKS */}
+        <View style={[cardStyles.card, { marginBottom: 15 }]}>
           <Text style={textStyles.sectionTitle}>Recent Walks</Text>
           <View style={cardStyles.divider} />
 
@@ -178,16 +281,41 @@ export default function PetActivityPage() {
                   <View style={rowStyles.row}>
                     <View style={rowStyles.rowLeft}>
                       <View>
+                        {/* TYPE + DURATION + MOOD */}
                         <Text style={textStyles.rowText}>
                           {walk.duration} min
+                          {walk.type && (
+                            <>
+                              {" • "}
+                              {walk.type === "quick" && "Quick walk ⚡"}
+                              {walk.type === "long" && "Long walk 🗺️"}
+                              {walk.type === "exercise" && "Exercise 🏃"}
+                              {walk.type === "night" && "Night walk 🌙"}
+                              {!walk.type && "Walk"}
+                            </>
+                          )}
+                          {walk.mood && (
+                            <>
+                              {" • "}
+                              {walk.mood === "happy" && "😊 Happy"}
+                              {walk.mood === "calm" && "😌 Calm"}
+                              {walk.mood === "energetic" && "⚡ Energetic"}
+                              {walk.mood === "tired" && "😴 Tired"}
+                              {!walk.mood && "Mood"}
+                            </>
+                          )}
                         </Text>
 
+                        {/* NOTE */}
+                        {walk.note ? (
+                          <Text style={textStyles.noteText}>
+                            Note: {walk.note}
+                          </Text>
+                        ) : null}
+
+                        {/* DATE */}
                         <Text style={textStyles.dateText}>
-                          {date.toLocaleDateString()} •{" "}
-                          {date.toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {formatDate(date)}
                         </Text>
                       </View>
                     </View>
