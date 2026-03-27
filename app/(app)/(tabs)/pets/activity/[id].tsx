@@ -11,6 +11,7 @@ import { rowStyles } from "@/styles/rowStyles";
 import { textStyles } from "@/styles/textStyles";
 import { PetData } from "@/types/pet";
 import { WalkData } from "@/types/walk";
+import { formatWalkSummary } from "@/utils/formatters";
 import { Feather, FontAwesome5 } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -230,28 +231,10 @@ export default function PetActivityPage() {
 
               {todaySummary.latestWalk && (
                 <Text style={textStyles.pageSubtitle}>
-                  {todaySummary.latestWalk.type && (
-                    <>
-                      {todaySummary.latestWalk.type === "quick" &&
-                        "⚡ Quick walk"}
-                      {todaySummary.latestWalk.type === "long" &&
-                        "🗺️ Long walk"}
-                      {todaySummary.latestWalk.type === "exercise" &&
-                        "🏃 Exercise"}
-                      {todaySummary.latestWalk.type === "night" &&
-                        "🌙 Night walk"}
-                      {" • "}
-                    </>
-                  )}
-
-                  {todaySummary.latestWalk.mood && (
-                    <>
-                      {todaySummary.latestWalk.mood === "happy" && "😊 Happy"}
-                      {todaySummary.latestWalk.mood === "calm" && "😌 Calm"}
-                      {todaySummary.latestWalk.mood === "energetic" &&
-                        "⚡ Energetic"}
-                      {todaySummary.latestWalk.mood === "tired" && "😴 Tired"}
-                    </>
+                  {todaySummary.latestWalk && (
+                    <Text style={textStyles.pageSubtitle}>
+                      {formatWalkSummary(todaySummary.latestWalk)}
+                    </Text>
                   )}
                 </Text>
               )}
@@ -273,7 +256,7 @@ export default function PetActivityPage() {
               const date = walk.createdAt?.toDate?.() ?? new Date();
 
               return (
-                /* SwipeDeleteRow håndterer hele swipe-logikken */
+                /* SwipeDeleteRow  */
                 <SwipeDeleteRow
                   key={walk.id}
                   onDelete={() => handleDelete(walk.id)}
@@ -283,27 +266,7 @@ export default function PetActivityPage() {
                       <View>
                         {/* TYPE + DURATION + MOOD */}
                         <Text style={textStyles.rowText}>
-                          {walk.duration} min
-                          {walk.type && (
-                            <>
-                              {" • "}
-                              {walk.type === "quick" && "Quick walk ⚡"}
-                              {walk.type === "long" && "Long walk 🗺️"}
-                              {walk.type === "exercise" && "Exercise 🏃"}
-                              {walk.type === "night" && "Night walk 🌙"}
-                              {!walk.type && "Walk"}
-                            </>
-                          )}
-                          {walk.mood && (
-                            <>
-                              {" • "}
-                              {walk.mood === "happy" && "😊 Happy"}
-                              {walk.mood === "calm" && "😌 Calm"}
-                              {walk.mood === "energetic" && "⚡ Energetic"}
-                              {walk.mood === "tired" && "😴 Tired"}
-                              {!walk.mood && "Mood"}
-                            </>
-                          )}
+                          {formatWalkSummary(walk)}
                         </Text>
 
                         {/* NOTE */}

@@ -8,6 +8,7 @@ import { inputStyles } from "@/styles/inputStyles";
 import { layoutStyles } from "@/styles/layoutStyles";
 import { textStyles } from "@/styles/textStyles";
 import { PetData } from "@/types/pet";
+import { formatMood, formatWalkType } from "@/utils/formatters";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -42,7 +43,7 @@ export default function LogWalkPage() {
   >("none");
   const [showMoodPicker, setShowMoodPicker] = useState(false);
 
-  // Henter riktig pet
+  /* -------- FETCHING CORRECT PET -------- */
   useEffect(() => {
     async function fetchPet() {
       if (!user?.uid || !id) return;
@@ -100,20 +101,9 @@ export default function LogWalkPage() {
             <View
               style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
             >
-              <Text>
-                {walkType === "none" && "🟢"}
-                {walkType === "quick" && "⚡"}
-                {walkType === "long" && "🗺️"}
-                {walkType === "exercise" && "🏃"}
-                {walkType === "night" && "🌙"}
-              </Text>
-
               <Text style={buttonStyles.dateButtonText}>
-                {walkType === "none" && "None"}
-                {walkType === "quick" && "Quick walk"}
-                {walkType === "long" && "Long walk"}
-                {walkType === "exercise" && "Exercise"}
-                {walkType === "night" && "Night walk"}
+                {formatWalkType(walkType === "none" ? null : walkType) ??
+                  "None"}
               </Text>
             </View>
           </Pressable>
@@ -189,20 +179,8 @@ export default function LogWalkPage() {
             <View
               style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
             >
-              <Text>
-                {mood === "none" && "🟢"}
-                {mood === "happy" && "😊"}
-                {mood === "calm" && "😌"}
-                {mood === "energetic" && "⚡"}
-                {mood === "tired" && "😴"}
-              </Text>
-
               <Text style={buttonStyles.dateButtonText}>
-                {mood === "none" && "None"}
-                {mood === "happy" && "Happy"}
-                {mood === "calm" && "Calm"}
-                {mood === "energetic" && "Energetic"}
-                {mood === "tired" && "Tired"}
+                {formatMood(mood === "none" ? null : mood) ?? "None"}
               </Text>
             </View>
           </Pressable>
@@ -308,6 +286,7 @@ export default function LogWalkPage() {
                 setDuration("");
                 setNote("");
                 setWalkType("none");
+                setMood("none");
 
                 router.replace(`/pets/activity/${id}`);
               } catch (e) {
