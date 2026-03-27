@@ -11,7 +11,7 @@ export const rowStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 12,
+    paddingVertical: 6,
   },
 
   rowLeft: {

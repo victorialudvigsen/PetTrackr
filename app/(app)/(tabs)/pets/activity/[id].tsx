@@ -14,6 +14,7 @@ import { textStyles } from "@/styles/textStyles";
 import { PetData } from "@/types/pet";
 import { WalkData } from "@/types/walk";
 import { formatWalkSummary } from "@/utils/formatters";
+import { calculateStats } from "@/utils/statsHelpers"; // 👈 NY
 import { Feather, FontAwesome5 } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -41,30 +42,29 @@ export default function PetActivityPage() {
   const [walks, setWalks] = useState<WalkData[]>([]);
   const [isLoadingWalks, setIsLoadingWalks] = useState(true);
 
-  const [todaySummary, setTodaySummary] = useState<{
-    count: number;
-    totalMinutes: number;
-    latestWalk: WalkData | null;
-  }>({
+  const [todaySummary, setTodaySummary] = useState({
     count: 0,
     totalMinutes: 0,
-    latestWalk: null,
+    latestWalk: null as WalkData | null,
+  });
+
+  /* -------- NY STATE -------- */
+  const [weeklyStats, setWeeklyStats] = useState({
+    thisWeek: 0,
+    streak: 0,
   });
 
   const [goal, setGoal] = useState(120);
   const [showGoalModal, setShowGoalModal] = useState(false);
+
   const dailyGoal = goal;
   const progress = Math.min(todaySummary.totalMinutes / dailyGoal, 1);
-  let progressColor = "#ff6b6b";
 
-  if (progress > 0.7) {
-    progressColor = colors.button;
-  } else if (progress > 0.3) {
-    progressColor = "#ffb300";
-  }
+  let progressColor = "#ff6b6b";
+  if (progress > 0.7) progressColor = colors.button;
+  else if (progress > 0.3) progressColor = "#ffb300";
 
   /* -------- DELETE WALK -------- */
-
   async function handleDelete(walkId: string) {
     if (!user?.uid || !pet?.id) return;
 
@@ -76,16 +76,23 @@ export default function PetActivityPage() {
         onPress: async () => {
           await walkApi.deleteWalk(user.uid, pet.id, walkId);
 
-          /* Oppdaterer listen etter sletting */
           const updated = await walkApi.getWalks(user.uid, pet.id);
           setWalks(updated);
+
           calculateTodaySummary(updated);
+
+          /* 👇 oppdater stats også */
+          const calculated = calculateStats(updated);
+          setWeeklyStats({
+            thisWeek: calculated.thisWeek,
+            streak: calculated.streak,
+          });
         },
       },
     ]);
   }
 
-  // Henter pet
+  /* -------- FETCH PET -------- */
   useEffect(() => {
     async function fetchPet() {
       if (!user?.uid || !id) return;
@@ -94,11 +101,8 @@ export default function PetActivityPage() {
       const result = await petApi.getPetById(user.uid, id);
       setPet(result);
 
-      if (result?.dailyGoal) {
-        setGoal(result.dailyGoal);
-      } else {
-        setGoal(120); // fallback
-      }
+      if (result?.dailyGoal) setGoal(result.dailyGoal);
+      else setGoal(120);
 
       setIsLoading(false);
     }
@@ -106,8 +110,8 @@ export default function PetActivityPage() {
     fetchPet();
   }, [user?.uid, id]);
 
-  /* -------- CALCULATE TODAY SUMMARY -------- */
-  function calculateTodaySummary(walks: any[]) {
+  /* -------- TODAY SUMMARY -------- */
+  function calculateTodaySummary(walks: WalkData[]) {
     const today = new Date();
 
     const isSameDay = (d1: Date, d2: Date) =>
@@ -132,7 +136,7 @@ export default function PetActivityPage() {
     });
   }
 
-  /* -------- FETCH PET + WALK -------- */
+  /* -------- FETCH WALKS -------- */
   useFocusEffect(
     React.useCallback(() => {
       async function fetchWalks() {
@@ -143,23 +147,14 @@ export default function PetActivityPage() {
         const result: WalkData[] = await walkApi.getWalks(user.uid, id);
         setWalks(result ?? []);
 
-        const today = new Date();
-
-        const isSameDay = (d1: Date, d2: Date) =>
-          d1.getDate() === d2.getDate() &&
-          d1.getMonth() === d2.getMonth() &&
-          d1.getFullYear() === d2.getFullYear();
-
-        const todayWalks = (result ?? []).filter((walk: WalkData) => {
-          const date = walk.createdAt?.toDate?.();
-          return date && isSameDay(date, today);
-        });
-
-        const totalMinutes = todayWalks.reduce(
-          (sum: number, w: WalkData) => sum + (w.duration || 0),
-          0,
-        );
         calculateTodaySummary(result ?? []);
+
+        /* 👇 HELPER BRUK */
+        const calculated = calculateStats(result ?? []);
+        setWeeklyStats({
+          thisWeek: calculated.thisWeek,
+          streak: calculated.streak,
+        });
 
         setIsLoadingWalks(false);
       }
@@ -200,25 +195,19 @@ export default function PetActivityPage() {
 
   return (
     <View style={layoutStyles.screen}>
-      {/* HEADER */}
       <AppHeader
         title={pet.name}
         onBack={() => {
-          if (from === "index") {
-            router.replace("/");
-          } else {
+          if (from === "index") router.replace("/");
+          else
             router.replace({
               pathname: "/pets/[id]",
               params: { id: pet.id },
             });
-          }
         }}
       />
 
-      <ScrollView
-        contentContainerStyle={layoutStyles.content}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={layoutStyles.content}>
         {/* TITLE */}
         <View style={layoutStyles.titleWrap}>
           <Text style={textStyles.pageTitle}>Activity</Text>
@@ -227,7 +216,7 @@ export default function PetActivityPage() {
           </Text>
         </View>
 
-        {/* LOG WALK CARD */}
+        {/* LOG WALK */}
         <View style={cardStyles.card}>
           <View style={rowStyles.logRow}>
             <View style={buttonStyles.iconCircle}>
@@ -255,15 +244,10 @@ export default function PetActivityPage() {
           </View>
         </View>
 
-        {/* TODAY SUMMARY */}
+        {/* TODAY */}
         <View style={cardStyles.card}>
-          {/* HEADER */}
           <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
+            style={{ flexDirection: "row", justifyContent: "space-between" }}
           >
             <Text style={textStyles.sectionTitle}>Today</Text>
 
@@ -280,7 +264,6 @@ export default function PetActivityPage() {
             <Text style={textStyles.emptyText}>No walks today</Text>
           ) : (
             <>
-              {/* PROGRESS BAR */}
               <View
                 style={{
                   height: 10,
@@ -299,9 +282,8 @@ export default function PetActivityPage() {
                 />
               </View>
 
-              {/* STATS */}
               <Text style={[textStyles.pageSubtitle, { marginTop: 10 }]}>
-                {todaySummary.totalMinutes} / {dailyGoal} min
+                {todaySummary.totalMinutes} min / {dailyGoal} min
               </Text>
 
               <Text style={textStyles.pageSubtitle}>
@@ -310,6 +292,43 @@ export default function PetActivityPage() {
               </Text>
             </>
           )}
+        </View>
+
+        {/* STATS PREVIEW (FIXET) */}
+        <View style={cardStyles.card}>
+          <Text style={textStyles.sectionTitle}>Statistics</Text>
+          <View style={cardStyles.divider} />
+
+          <Text style={textStyles.pageSubtitle}>📊 This week</Text>
+          <Text style={textStyles.rowText}>{weeklyStats.thisWeek} min</Text>
+
+          <Text style={[textStyles.pageSubtitle, { marginTop: 8 }]}>
+            🔥 Streak
+          </Text>
+          <Text style={textStyles.rowText}>
+            {weeklyStats.streak} day
+            {weeklyStats.streak !== 1 ? "s" : ""}
+          </Text>
+
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: "/pets/activity/stats/[id]",
+                params: { id },
+              })
+            }
+            style={{ marginTop: 10 }}
+          >
+            <Text
+              style={{
+                color: colors.button,
+                fontWeight: "600",
+                textAlign: "center",
+              }}
+            >
+              View insights →
+            </Text>
+          </Pressable>
         </View>
 
         {/* RECENT WALKS */}
@@ -322,11 +341,10 @@ export default function PetActivityPage() {
           ) : walks.length === 0 ? (
             <Text style={textStyles.emptyText}>No walks logged yet.</Text>
           ) : (
-            walks.map((walk) => {
+            walks.slice(0, 5).map((walk) => {
               const date = walk.createdAt?.toDate?.() ?? new Date();
 
               return (
-                /* SwipeDeleteRow  */
                 <SwipeDeleteRow
                   key={walk.id}
                   onDelete={() => handleDelete(walk.id)}
@@ -334,19 +352,16 @@ export default function PetActivityPage() {
                   <View style={rowStyles.row}>
                     <View style={rowStyles.rowLeft}>
                       <View>
-                        {/* TYPE + DURATION + MOOD */}
                         <Text style={textStyles.rowText}>
                           {formatWalkSummary(walk)}
                         </Text>
 
-                        {/* NOTE */}
-                        {walk.note ? (
+                        {walk.note && (
                           <Text style={textStyles.noteText}>
                             Note: {walk.note}
                           </Text>
-                        ) : null}
+                        )}
 
-                        {/* DATE */}
                         <Text style={textStyles.dateText}>
                           {formatDate(date)}
                         </Text>
@@ -357,8 +372,29 @@ export default function PetActivityPage() {
               );
             })
           )}
+
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: "/pets/activity/history/[id]",
+                params: { id },
+              })
+            }
+            style={{ marginTop: 10 }}
+          >
+            <Text
+              style={{
+                color: colors.button,
+                fontWeight: "600",
+                textAlign: "center",
+              }}
+            >
+              See all activity →
+            </Text>
+          </Pressable>
         </View>
       </ScrollView>
+
       <GoalModal
         visible={showGoalModal}
         onClose={() => setShowGoalModal(false)}
@@ -367,7 +403,6 @@ export default function PetActivityPage() {
 
           try {
             await updatePetGoal(user.uid, pet.id, value);
-
             setGoal(value);
           } catch (e) {
             console.log("Error saving goal:", e);
