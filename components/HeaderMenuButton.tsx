@@ -104,7 +104,7 @@ export default function HeaderMenuButton({ onOpenChange }: Props) {
         ]}
         hitSlop={10}
       >
-        <AntDesign name="menu" size={22} color={colors.button} />
+        <AntDesign name="menu" size={18} color={colors.button} />
       </Pressable>
 
       <Modal

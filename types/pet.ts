@@ -6,4 +6,5 @@ export interface PetData {
   weight?: string;
   gender?: string;
   age?: string;
+  dailyGoal?: number;
 }

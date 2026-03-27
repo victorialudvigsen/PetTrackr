@@ -8,6 +8,7 @@ import {
   getDoc,
   getDocs,
   setDoc,
+  updateDoc,
 } from "firebase/firestore";
 
 // Lager et nytt dyr for en bruker (users/{uid}/pets)
@@ -105,6 +106,24 @@ export async function deletePet(userId: string, petId: string) {
     console.log("Pet deleted:", petId);
   } catch (e) {
     console.log("Error deleting pet", e);
+    throw e;
+  }
+}
+
+// Oppdaterer progressbar
+export async function updatePetGoal(
+  userId: string,
+  petId: string,
+  goal: number,
+) {
+  try {
+    const ref = doc(db, "users", userId, "pets", petId);
+
+    await updateDoc(ref, {
+      dailyGoal: goal,
+    });
+  } catch (e) {
+    console.log("Error updating goal:", e);
     throw e;
   }
 }

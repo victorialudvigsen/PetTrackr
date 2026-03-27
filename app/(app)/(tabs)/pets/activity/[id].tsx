@@ -1,6 +1,8 @@
 import * as petApi from "@/api/petApi";
+import { updatePetGoal } from "@/api/petApi";
 import * as walkApi from "@/api/walkApi";
 import AppHeader from "@/components/AppHeader";
+import GoalModal from "@/components/GoalModal";
 import SwipeDeleteRow from "@/components/SwipeDeleteRow";
 import { useAuthSession } from "@/providers/authctx";
 import { buttonStyles } from "@/styles/buttonStyles";
@@ -49,6 +51,18 @@ export default function PetActivityPage() {
     latestWalk: null,
   });
 
+  const [goal, setGoal] = useState(120);
+  const [showGoalModal, setShowGoalModal] = useState(false);
+  const dailyGoal = goal;
+  const progress = Math.min(todaySummary.totalMinutes / dailyGoal, 1);
+  let progressColor = "#ff6b6b";
+
+  if (progress > 0.7) {
+    progressColor = colors.button;
+  } else if (progress > 0.3) {
+    progressColor = "#ffb300";
+  }
+
   /* -------- DELETE WALK -------- */
 
   async function handleDelete(walkId: string) {
@@ -65,12 +79,13 @@ export default function PetActivityPage() {
           /* Oppdaterer listen etter sletting */
           const updated = await walkApi.getWalks(user.uid, pet.id);
           setWalks(updated);
+          calculateTodaySummary(updated);
         },
       },
     ]);
   }
 
-  // Henter pet for å vise navn i header
+  // Henter pet
   useEffect(() => {
     async function fetchPet() {
       if (!user?.uid || !id) return;
@@ -78,11 +93,44 @@ export default function PetActivityPage() {
       setIsLoading(true);
       const result = await petApi.getPetById(user.uid, id);
       setPet(result);
+
+      if (result?.dailyGoal) {
+        setGoal(result.dailyGoal);
+      } else {
+        setGoal(120); // fallback
+      }
+
       setIsLoading(false);
     }
 
     fetchPet();
   }, [user?.uid, id]);
+
+  /* -------- CALCULATE TODAY SUMMARY -------- */
+  function calculateTodaySummary(walks: any[]) {
+    const today = new Date();
+
+    const isSameDay = (d1: Date, d2: Date) =>
+      d1.getDate() === d2.getDate() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getFullYear() === d2.getFullYear();
+
+    const todayWalks = walks.filter((walk) => {
+      const date = walk.createdAt?.toDate?.();
+      return date && isSameDay(date, today);
+    });
+
+    const totalMinutes = todayWalks.reduce(
+      (sum, w) => sum + (w.duration || 0),
+      0,
+    );
+
+    setTodaySummary({
+      count: todayWalks.length,
+      totalMinutes,
+      latestWalk: todayWalks[0] ?? null,
+    });
+  }
 
   /* -------- FETCH PET + WALK -------- */
   useFocusEffect(
@@ -111,11 +159,7 @@ export default function PetActivityPage() {
           (sum: number, w: WalkData) => sum + (w.duration || 0),
           0,
         );
-        setTodaySummary({
-          count: todayWalks.length,
-          totalMinutes,
-          latestWalk: todayWalks[0] ?? null,
-        });
+        calculateTodaySummary(result ?? []);
 
         setIsLoadingWalks(false);
       }
@@ -213,31 +257,57 @@ export default function PetActivityPage() {
 
         {/* TODAY SUMMARY */}
         <View style={cardStyles.card}>
-          <Text style={textStyles.sectionTitle}>Today</Text>
+          {/* HEADER */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Text style={textStyles.sectionTitle}>Today</Text>
+
+            <Pressable onPress={() => setShowGoalModal(true)}>
+              <Text style={{ color: colors.button, fontWeight: "600" }}>
+                Edit
+              </Text>
+            </Pressable>
+          </View>
+
           <View style={cardStyles.divider} />
 
           {todaySummary.count === 0 ? (
             <Text style={textStyles.emptyText}>No walks today</Text>
           ) : (
             <>
+              {/* PROGRESS BAR */}
+              <View
+                style={{
+                  height: 10,
+                  backgroundColor: "#eee",
+                  borderRadius: 6,
+                  overflow: "hidden",
+                  marginTop: 10,
+                }}
+              >
+                <View
+                  style={{
+                    width: `${progress * 100}%`,
+                    height: "100%",
+                    backgroundColor: progressColor,
+                  }}
+                />
+              </View>
+
+              {/* STATS */}
+              <Text style={[textStyles.pageSubtitle, { marginTop: 10 }]}>
+                {todaySummary.totalMinutes} / {dailyGoal} min
+              </Text>
+
               <Text style={textStyles.pageSubtitle}>
                 🐾 {todaySummary.count} walk
                 {todaySummary.count > 1 ? "s" : ""}
               </Text>
-
-              <Text style={textStyles.pageSubtitle}>
-                ⏱️ {todaySummary.totalMinutes} min
-              </Text>
-
-              {todaySummary.latestWalk && (
-                <Text style={textStyles.pageSubtitle}>
-                  {todaySummary.latestWalk && (
-                    <Text style={textStyles.pageSubtitle}>
-                      {formatWalkSummary(todaySummary.latestWalk)}
-                    </Text>
-                  )}
-                </Text>
-              )}
             </>
           )}
         </View>
@@ -289,6 +359,21 @@ export default function PetActivityPage() {
           )}
         </View>
       </ScrollView>
+      <GoalModal
+        visible={showGoalModal}
+        onClose={() => setShowGoalModal(false)}
+        onSave={async (value) => {
+          if (!user?.uid || !pet?.id) return;
+
+          try {
+            await updatePetGoal(user.uid, pet.id, value);
+
+            setGoal(value);
+          } catch (e) {
+            console.log("Error saving goal:", e);
+          }
+        }}
+      />
     </View>
   );
 }
