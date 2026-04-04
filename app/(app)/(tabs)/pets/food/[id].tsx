@@ -13,6 +13,8 @@ import { rowStyles } from "@/styles/rowStyles";
 import { textStyles } from "@/styles/textStyles";
 import { FoodEntryData } from "@/types/food";
 import { PetData } from "@/types/pet";
+import { formatFoodSummary } from "@/utils/formatters";
+import { calculateStats } from "@/utils/statsHelpers";
 import { Feather } from "@expo/vector-icons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect } from "@react-navigation/native";
@@ -53,6 +55,11 @@ export default function FoodPage() {
   if (progress > 0.7) progressColor = colors.button;
   else if (progress > 0.3) progressColor = "#ffb300";
 
+  const [foodStats, setFoodStats] = useState({
+    thisWeek: 0,
+    streak: 0,
+  });
+
   /* -------- DELETE FUNCTION -------- */
   async function handleDelete(entryId: string) {
     if (!user?.uid || !pet?.id) return;
@@ -68,6 +75,17 @@ export default function FoodPage() {
           const updated = await foodApi.getFoodEntries(user.uid, pet.id);
           setFoodEntries(updated);
           calculateTodayFood(updated);
+
+          const stats = calculateStats(
+            updated,
+            (e) => (e.type === "meal" ? (e.grams ?? 0) : (e.count ?? 0)),
+            (e) => e.createdAt?.toDate?.() ?? null,
+          );
+
+          setFoodStats({
+            thisWeek: stats.thisWeek,
+            streak: stats.streak,
+          });
         },
       },
     ]);
@@ -133,6 +151,17 @@ export default function FoodPage() {
         const entries = await foodApi.getFoodEntries(user.uid, id);
         setFoodEntries(entries);
         calculateTodayFood(entries);
+
+        const stats = calculateStats(
+          entries,
+          (e) => (e.type === "meal" ? (e.grams ?? 0) : (e.count ?? 0)),
+          (e) => e.createdAt?.toDate?.() ?? null,
+        );
+
+        setFoodStats({
+          thisWeek: stats.thisWeek,
+          streak: stats.streak,
+        });
       }
 
       fetchFood();
@@ -286,6 +315,44 @@ export default function FoodPage() {
           )}
         </View>
 
+        {/* STATS PREVIEW */}
+        <View style={cardStyles.card}>
+          <Text style={textStyles.sectionTitle}>Statistics</Text>
+          <View style={cardStyles.divider} />
+
+          {/* THIS WEEK */}
+          <Text style={textStyles.pageSubtitle}>📊 This week</Text>
+          <Text style={textStyles.rowText}>{foodStats.thisWeek} g</Text>
+
+          {/* STREAK */}
+          <Text style={[textStyles.pageSubtitle, { marginTop: 8 }]}>
+            🔥 Streak
+          </Text>
+          <Text style={textStyles.rowText}>
+            {foodStats.streak} day{foodStats.streak !== 1 ? "s" : ""}
+          </Text>
+
+          <Pressable
+            style={{ marginTop: 10 }}
+            onPress={() =>
+              router.push({
+                pathname: "/pets/food/stats/[id]",
+                params: { id },
+              })
+            }
+          >
+            <Text
+              style={{
+                color: colors.button,
+                fontWeight: "600",
+                textAlign: "center",
+              }}
+            >
+              View insights →
+            </Text>
+          </Pressable>
+        </View>
+
         {/* RECENT MEALS */}
         <View style={cardStyles.card}>
           <Text style={textStyles.sectionTitle}>Recent meals</Text>
@@ -304,8 +371,19 @@ export default function FoodPage() {
                 <View style={rowStyles.row}>
                   <View style={rowStyles.rowLeft}>
                     <View>
-                      <Text style={textStyles.rowText}>{entry.grams} g</Text>
+                      {/* SUMMARY */}
+                      <Text style={textStyles.rowText}>
+                        {formatFoodSummary(entry)}
+                      </Text>
 
+                      {/* NOTE */}
+                      {entry.note ? (
+                        <Text style={textStyles.noteText}>
+                          Note: {entry.note}
+                        </Text>
+                      ) : null}
+
+                      {/* DATE */}
                       <Text style={textStyles.dateText}>
                         {formatDate(entry.createdAt?.toDate?.() ?? new Date())}
                       </Text>

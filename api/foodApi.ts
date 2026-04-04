@@ -20,11 +20,19 @@ function foodCollection(userId: string, petId: string) {
 export async function addFoodEntry(
   userId: string,
   petId: string,
-  grams: number,
+  data: {
+    type: "meal" | "treat" | "bone";
+    grams?: number;
+    count?: number;
+    note?: string;
+  },
 ) {
   try {
     const ref = await addDoc(foodCollection(userId, petId), {
-      grams,
+      type: data.type,
+      grams: data.grams ?? null,
+      count: data.count ?? null,
+      note: data.note ?? null,
       createdAt: serverTimestamp(),
     });
     return ref.id;

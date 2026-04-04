@@ -49,6 +49,40 @@ export function formatWalkSummary(walk: WalkData) {
 }
 
 /* -------- FOOD -------- */
-export function formatFoodSummary(entry: { grams: number }) {
-  return `${entry.grams} g`;
+export function formatFoodType(type?: string | null) {
+  switch (type) {
+    case "meal":
+      return "🍽️ Meal";
+    case "treat":
+      return "🍬 Treat";
+    case "bone":
+      return "🦴 Bone";
+    default:
+      return null;
+  }
+}
+
+export function formatFoodSummary(entry: {
+  grams?: number | null;
+  count?: number | null;
+  type?: string | null;
+}) {
+  const parts: string[] = [];
+
+  // VALUE
+  if (entry.type === "meal") {
+    if (entry.grams) {
+      parts.push(`${entry.grams} g`);
+    }
+  } else {
+    if (entry.count) {
+      parts.push(`${entry.count}x`);
+    }
+  }
+
+  // TYPE
+  const type = formatFoodType(entry.type);
+  if (type) parts.push(type);
+
+  return parts.join(" • ");
 }
