@@ -81,8 +81,11 @@ export default function PetActivityPage() {
 
           calculateTodaySummary(updated);
 
-          /* 👇 oppdater stats også */
-          const calculated = calculateStats(updated);
+          const calculated = calculateStats(
+            updated,
+            (w) => w.duration,
+            (w) => w.createdAt?.toDate?.() ?? null,
+          );
           setWeeklyStats({
             thisWeek: calculated.thisWeek,
             streak: calculated.streak,
@@ -149,8 +152,11 @@ export default function PetActivityPage() {
 
         calculateTodaySummary(result ?? []);
 
-        /* 👇 HELPER BRUK */
-        const calculated = calculateStats(result ?? []);
+        const calculated = calculateStats(
+          result ?? [],
+          (w) => w.duration,
+          (w) => w.createdAt?.toDate?.() ?? null,
+        );
         setWeeklyStats({
           thisWeek: calculated.thisWeek,
           streak: calculated.streak,

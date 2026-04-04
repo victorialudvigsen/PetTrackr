@@ -1,6 +1,8 @@
 import * as foodApi from "@/api/foodApi";
 import * as petApi from "@/api/petApi";
+import { updatePetGoal } from "@/api/petApi";
 import AppHeader from "@/components/AppHeader";
+import GoalModal from "@/components/GoalModal";
 import SwipeDeleteRow from "@/components/SwipeDeleteRow";
 import { useAuthSession } from "@/providers/authctx";
 import { buttonStyles } from "@/styles/buttonStyles";
@@ -13,7 +15,6 @@ import { FoodEntryData } from "@/types/food";
 import { PetData } from "@/types/pet";
 import { Feather } from "@expo/vector-icons";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -41,8 +42,18 @@ export default function FoodPage() {
   const [foodEntries, setFoodEntries] = useState<FoodEntryData[]>([]);
   const [isLoadingFood, setIsLoadingFood] = useState(true);
 
-  /* -------- DELETE FUNCTION -------- */
+  const [todaySummary, setTodaySummary] = useState({
+    count: 0,
+    totalGrams: 0,
+  });
+  const [goal, setGoal] = useState(300);
+  const [showGoalModal, setShowGoalModal] = useState(false);
+  const progress = Math.min(todaySummary.totalGrams / goal, 1);
+  let progressColor = "#ff6b6b";
+  if (progress > 0.7) progressColor = colors.button;
+  else if (progress > 0.3) progressColor = "#ffb300";
 
+  /* -------- DELETE FUNCTION -------- */
   async function handleDelete(entryId: string) {
     if (!user?.uid || !pet?.id) return;
 
@@ -56,13 +67,13 @@ export default function FoodPage() {
 
           const updated = await foodApi.getFoodEntries(user.uid, pet.id);
           setFoodEntries(updated);
+          calculateTodayFood(updated);
         },
       },
     ]);
   }
 
   /* -------- FETCH PET + FOOD -------- */
-
   useEffect(() => {
     async function fetchData() {
       if (!user?.uid || !id) return;
@@ -75,13 +86,43 @@ export default function FoodPage() {
 
       const entries = await foodApi.getFoodEntries(user.uid, id);
       setFoodEntries(entries);
+      calculateTodayFood(entries);
 
       setIsLoading(false);
       setIsLoadingFood(false);
+
+      if (petResult?.dailyGoal) {
+        setGoal(petResult.dailyGoal);
+      }
     }
 
     fetchData();
   }, [user?.uid, id]);
+
+  /* -------- TODAY SUMMARY -------- */
+  function calculateTodayFood(entries: FoodEntryData[]) {
+    const today = new Date();
+
+    const isSameDay = (d1: Date, d2: Date) =>
+      d1.getDate() === d2.getDate() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getFullYear() === d2.getFullYear();
+
+    const todayEntries = entries.filter((entry) => {
+      const date = entry.createdAt?.toDate?.();
+      return date && isSameDay(date, today);
+    });
+
+    const totalGrams = todayEntries.reduce(
+      (sum: number, e: FoodEntryData) => sum + (e.grams || 0),
+      0,
+    );
+
+    setTodaySummary({
+      count: todayEntries.length,
+      totalGrams,
+    });
+  }
 
   /* Oppdaterer listen når siden får fokus igjen */
   useFocusEffect(
@@ -91,6 +132,7 @@ export default function FoodPage() {
 
         const entries = await foodApi.getFoodEntries(user.uid, id);
         setFoodEntries(entries);
+        calculateTodayFood(entries);
       }
 
       fetchFood();
@@ -104,6 +146,27 @@ export default function FoodPage() {
         <Text style={{ marginTop: 8 }}>Loading food...</Text>
       </View>
     );
+  }
+
+  /* -------- FORMAT DATE -------- */
+  function formatDate(date: Date) {
+    const today = new Date();
+    const tomorrow = new Date();
+
+    tomorrow.setDate(today.getDate() + 1);
+
+    const isToday = date.toDateString() === today.toDateString();
+    const isTomorrow = date.toDateString() === tomorrow.toDateString();
+
+    const time = date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    if (isToday) return `Today • ${time}`;
+    if (isTomorrow) return `Tomorrow • ${time}`;
+
+    return `${date.toLocaleDateString()} • ${time}`;
   }
 
   return (
@@ -166,6 +229,63 @@ export default function FoodPage() {
           </View>
         </View>
 
+        {/* TODAY */}
+        <View style={cardStyles.card}>
+          {/* HEADER */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Text style={textStyles.sectionTitle}>Today</Text>
+
+            <Pressable onPress={() => setShowGoalModal(true)}>
+              <Text style={{ color: colors.button, fontWeight: "600" }}>
+                Edit
+              </Text>
+            </Pressable>
+          </View>
+
+          <View style={cardStyles.divider} />
+
+          {todaySummary.count === 0 ? (
+            <Text style={textStyles.emptyText}>No meals today</Text>
+          ) : (
+            <>
+              {/* PROGRESS BAR */}
+              <View
+                style={{
+                  height: 10,
+                  backgroundColor: "#eee",
+                  borderRadius: 6,
+                  overflow: "hidden",
+                  marginTop: 10,
+                }}
+              >
+                <View
+                  style={{
+                    width: `${progress * 100}%`,
+                    height: "100%",
+                    backgroundColor: progressColor,
+                  }}
+                />
+              </View>
+
+              {/* STATS */}
+              <Text style={[textStyles.pageSubtitle, { marginTop: 10 }]}>
+                {todaySummary.totalGrams} g / {goal} g
+              </Text>
+
+              <Text style={textStyles.pageSubtitle}>
+                🍽️ {todaySummary.count} meal
+                {todaySummary.count !== 1 ? "s" : ""}
+              </Text>
+            </>
+          )}
+        </View>
+
         {/* RECENT MEALS */}
         <View style={cardStyles.card}>
           <Text style={textStyles.sectionTitle}>Recent meals</Text>
@@ -183,15 +303,13 @@ export default function FoodPage() {
               >
                 <View style={rowStyles.row}>
                   <View style={rowStyles.rowLeft}>
-                    <View style={rowStyles.rowIconWrap}>
-                      <MaterialCommunityIcons
-                        name="food-steak"
-                        size={16}
-                        color="black"
-                      />
-                    </View>
+                    <View>
+                      <Text style={textStyles.rowText}>{entry.grams} g</Text>
 
-                    <Text style={textStyles.rowText}>{entry.grams} g</Text>
+                      <Text style={textStyles.dateText}>
+                        {formatDate(entry.createdAt?.toDate?.() ?? new Date())}
+                      </Text>
+                    </View>
                   </View>
                 </View>
               </SwipeDeleteRow>
@@ -201,6 +319,20 @@ export default function FoodPage() {
 
         <View style={{ height: 18 }} />
       </ScrollView>
+      <GoalModal
+        visible={showGoalModal}
+        onClose={() => setShowGoalModal(false)}
+        onSave={async (value) => {
+          if (!user?.uid || !pet?.id) return;
+
+          try {
+            await updatePetGoal(user.uid, pet.id, value);
+            setGoal(value);
+          } catch (e) {
+            console.log("Error saving goal:", e);
+          }
+        }}
+      />
     </View>
   );
 }

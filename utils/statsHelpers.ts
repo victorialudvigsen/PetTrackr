@@ -1,26 +1,30 @@
-export function calculateStats(walks: any[]) {
-  const allWalks = walks ?? [];
+export function calculateStats<T>(
+  items: T[],
+  getValue: (item: T) => number,
+  getDate: (item: T) => Date | null,
+) {
+  const allItems = items ?? [];
 
   /* -------- TOTAL -------- */
-  const totalMinutes = allWalks.reduce((sum, w) => sum + (w.duration || 0), 0);
+  const total = allItems.reduce((sum, item) => sum + (getValue(item) || 0), 0);
 
-  const totalWalks = allWalks.length;
+  const totalCount = allItems.length;
 
-  /* -------- AVG PER DAY -------- */
+  /* -------- UNIQUE DAYS -------- */
   const uniqueDays = new Set(
-    allWalks.map((w) => {
-      const d = w.createdAt?.toDate?.();
+    allItems.map((item) => {
+      const d = getDate(item);
       return d ? d.toDateString() : null;
     }),
   );
 
   const avgPerDay =
-    uniqueDays.size > 0 ? Math.round(totalMinutes / uniqueDays.size) : 0;
+    uniqueDays.size > 0 ? Math.round(total / uniqueDays.size) : 0;
 
   /* -------- STREAK -------- */
   const daysSet = new Set(
-    allWalks.map((w) => {
-      const d = w.createdAt?.toDate?.();
+    allItems.map((item) => {
+      const d = getDate(item);
       return d ? d.toDateString() : null;
     }),
   );
@@ -39,7 +43,7 @@ export function calculateStats(walks: any[]) {
     }
   }
 
-  /* -------- WEEKLY -------- */
+  /* -------- WEEK -------- */
   function getStartOfWeek(date: Date) {
     const d = new Date(date);
     const day = d.getDay();
@@ -60,21 +64,21 @@ export function calculateStats(walks: any[]) {
   let thisWeek = 0;
   let lastWeek = 0;
 
-  allWalks.forEach((w) => {
-    const d = w.createdAt?.toDate?.();
+  allItems.forEach((item) => {
+    const d = getDate(item);
     if (!d) return;
 
     if (d >= startOfThisWeek && d <= now) {
-      thisWeek += w.duration || 0;
+      thisWeek += getValue(item) || 0;
     } else if (d >= startOfLastWeek && d < startOfThisWeek) {
-      lastWeek += w.duration || 0;
+      lastWeek += getValue(item) || 0;
     }
   });
 
   return {
-    totalMinutes,
+    total,
     avgPerDay,
-    totalWalks,
+    totalCount,
     streak,
     thisWeek,
     lastWeek,

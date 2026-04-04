@@ -47,3 +47,8 @@ export function formatWalkSummary(walk: WalkData) {
 
   return parts.join(" • ");
 }
+
+/* -------- FOOD -------- */
+export function formatFoodSummary(entry: { grams: number }) {
+  return `${entry.grams} g`;
+}
