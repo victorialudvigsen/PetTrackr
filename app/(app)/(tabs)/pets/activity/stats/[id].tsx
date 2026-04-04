@@ -49,9 +49,13 @@ export default function ActivityStatsPage() {
         const allWalks = walkData ?? [];
 
         /* -------- USE HELPER -------- */
-        const calculated = calculateStats(allWalks);
+        const calculated = calculateStats(
+          allWalks,
+          (w) => w.duration,
+          (w) => w.createdAt?.toDate?.() ?? null,
+        );
 
-        /* -------- WEEK GRAPH DATA (beholdes her) -------- */
+        /* -------- WEEK GRAPH DATA -------- */
         function getStartOfWeek(date: Date) {
           const d = new Date(date);
           const day = d.getDay();
@@ -99,7 +103,12 @@ export default function ActivityStatsPage() {
 
         /* -------- SET STATE -------- */
         setStats({
-          ...calculated,
+          totalMinutes: calculated.total,
+          avgPerDay: calculated.avgPerDay,
+          totalWalks: calculated.totalCount,
+          streak: calculated.streak,
+          thisWeek: calculated.thisWeek,
+          lastWeek: calculated.lastWeek,
           weekData: weekDays,
         });
 
