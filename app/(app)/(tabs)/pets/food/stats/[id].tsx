@@ -7,7 +7,7 @@ import { colors } from "@/styles/colors";
 import { layoutStyles } from "@/styles/layoutStyles";
 import { textStyles } from "@/styles/textStyles";
 import { PetData } from "@/types/pet";
-import { calculateStats } from "@/utils/statsHelpers";
+import { calculateFoodStats, getFoodWeekData } from "@/utils/statsHelpers";
 import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -21,16 +21,37 @@ export default function FoodStatsPage() {
   const [pet, setPet] = useState<PetData | null>(null);
   const [foodEntries, setFoodEntries] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
   const [stats, setStats] = useState({
     totalGrams: 0,
-    avgPerDay: 0,
     totalMeals: 0,
-    streak: 0,
-    thisWeek: 0,
-    lastWeek: 0,
-    weekData: [] as any[],
+    totalTreats: 0,
+    totalBones: 0,
+
+    thisWeekGrams: 0,
+    thisWeekTreats: 0,
+    thisWeekBones: 0,
+
+    lastWeekGrams: 0,
+    lastWeekTreats: 0,
+    lastWeekBones: 0,
+
+    avgGramsPerDay: 0,
+    avgTreatsPerDay: 0,
+    avgBonesPerDay: 0,
   });
+  const [weekData, setWeekData] = useState<
+    {
+      treats: any;
+      bones: any;
+      label: string;
+      date: Date;
+      grams: number;
+    }[]
+  >([]);
+  const [selectedType, setSelectedType] = useState<
+    "grams" | "treats" | "bones"
+  >("grams");
+  const [selectedWeek, setSelectedWeek] = useState<"this" | "last">("this");
 
   useFocusEffect(
     React.useCallback(() => {
@@ -41,15 +62,14 @@ export default function FoodStatsPage() {
 
         const petData = await petApi.getPetById(user.uid, id);
         const entries = await foodApi.getFoodEntries(user.uid, id);
+        const weekData = getFoodWeekData(entries);
+        console.log(weekData);
+        setWeekData(weekData);
 
         setPet(petData);
         setFoodEntries(entries ?? []);
 
-        const calculated = calculateStats(
-          entries,
-          (e) => (e.type === "meal" ? (e.grams ?? 0) : (e.count ?? 0)),
-          (e) => e.createdAt?.toDate?.() ?? null,
-        );
+        const stats = calculateFoodStats(entries ?? []);
 
         /* -------- WEEK DATA (graf) -------- */
         function getStartOfWeek(date: Date) {
@@ -85,15 +105,7 @@ export default function FoodStatsPage() {
           });
         });
 
-        setStats({
-          totalGrams: calculated.total,
-          avgPerDay: calculated.avgPerDay,
-          totalMeals: calculated.totalCount,
-          streak: calculated.streak,
-          thisWeek: calculated.thisWeek,
-          lastWeek: calculated.lastWeek,
-          weekData: weekDays,
-        });
+        setStats(stats);
 
         setIsLoading(false);
       }
@@ -131,13 +143,29 @@ export default function FoodStatsPage() {
           <Text style={textStyles.sectionTitle}>Total</Text>
           <View style={cardStyles.divider} />
 
-          <Text style={textStyles.pageSubtitle}>Total grams</Text>
-          <Text style={textStyles.rowText}>{stats.totalGrams} g</Text>
+          <View
+            style={{ flexDirection: "row", justifyContent: "space-between" }}
+          >
+            <View style={{ alignItems: "center", flex: 1 }}>
+              <Text style={textStyles.pageSubtitle}>Grams</Text>
+              <Text style={textStyles.rowText}>{stats.totalGrams} g</Text>
+            </View>
 
-          <Text style={[textStyles.pageSubtitle, { marginTop: 8 }]}>
-            Total meals
-          </Text>
-          <Text style={textStyles.rowText}>{stats.totalMeals}</Text>
+            <View style={{ alignItems: "center", flex: 1 }}>
+              <Text style={textStyles.pageSubtitle}>Meals</Text>
+              <Text style={textStyles.rowText}>{stats.totalMeals}</Text>
+            </View>
+
+            <View style={{ alignItems: "center", flex: 1 }}>
+              <Text style={textStyles.pageSubtitle}>Treats</Text>
+              <Text style={textStyles.rowText}>{stats.totalTreats}</Text>
+            </View>
+
+            <View style={{ alignItems: "center", flex: 1 }}>
+              <Text style={textStyles.pageSubtitle}>Bones</Text>
+              <Text style={textStyles.rowText}>{stats.totalBones}</Text>
+            </View>
+          </View>
         </View>
 
         {/* AVERAGE */}
@@ -145,75 +173,180 @@ export default function FoodStatsPage() {
           <Text style={textStyles.sectionTitle}>Average</Text>
           <View style={cardStyles.divider} />
 
-          <Text style={textStyles.pageSubtitle}>Per day</Text>
-          <Text style={textStyles.rowText}>{stats.avgPerDay} g</Text>
+          <View
+            style={{ flexDirection: "row", justifyContent: "space-between" }}
+          >
+            <View style={{ alignItems: "center", flex: 1 }}>
+              <Text style={textStyles.pageSubtitle}>Grams/day</Text>
+              <Text style={textStyles.rowText}>{stats.avgGramsPerDay} g</Text>
+            </View>
+
+            <View style={{ alignItems: "center", flex: 1 }}>
+              <Text style={textStyles.pageSubtitle}>Treats/day</Text>
+              <Text style={textStyles.rowText}>{stats.avgTreatsPerDay}</Text>
+            </View>
+
+            <View style={{ alignItems: "center", flex: 1 }}>
+              <Text style={textStyles.pageSubtitle}>Bones/day</Text>
+              <Text style={textStyles.rowText}>{stats.avgBonesPerDay}</Text>
+            </View>
+          </View>
         </View>
 
-        {/* STREAK */}
+        {/* THIS WEEK */}
         <View style={cardStyles.card}>
-          <Text style={textStyles.sectionTitle}>Streak</Text>
+          <Text style={textStyles.sectionTitle}>Weekly stats</Text>
+          <View style={{ flexDirection: "row", gap: 16 }}>
+            <Text
+              onPress={() => setSelectedWeek("this")}
+              style={{
+                fontWeight: selectedWeek === "this" ? "600" : "400",
+                color: selectedWeek === "this" ? colors.button : "#888",
+              }}
+            >
+              This Week
+            </Text>
+
+            <Text
+              onPress={() => setSelectedWeek("last")}
+              style={{
+                fontWeight: selectedWeek === "last" ? "600" : "400",
+                color: selectedWeek === "last" ? colors.button : "#888",
+              }}
+            >
+              Last Week
+            </Text>
+          </View>
           <View style={cardStyles.divider} />
 
-          <Text style={textStyles.pageSubtitle}>Current streak</Text>
-          <Text style={textStyles.rowText}>
-            🔥 {stats.streak} day{stats.streak !== 1 ? "s" : ""}
-          </Text>
-        </View>
+          <View
+            style={{ flexDirection: "row", justifyContent: "space-between" }}
+          >
+            <View style={{ alignItems: "center", flex: 1 }}>
+              <Text style={textStyles.pageSubtitle}>Grams</Text>
+              <Text style={textStyles.rowText}>
+                {selectedWeek === "this"
+                  ? stats.thisWeekGrams
+                  : stats.lastWeekGrams}{" "}
+                g
+              </Text>
+            </View>
 
-        {/* WEEK */}
-        <View style={cardStyles.card}>
-          <Text style={textStyles.sectionTitle}>This Week</Text>
-          <View style={cardStyles.divider} />
+            <View style={{ alignItems: "center", flex: 1 }}>
+              <Text style={textStyles.pageSubtitle}>Treats</Text>
+              <Text style={textStyles.rowText}>
+                {selectedWeek === "this"
+                  ? stats.thisWeekTreats
+                  : stats.lastWeekTreats}
+              </Text>
+            </View>
 
-          <Text style={textStyles.pageSubtitle}>This week</Text>
-          <Text style={textStyles.rowText}>{stats.thisWeek} g</Text>
-
-          <Text style={[textStyles.pageSubtitle, { marginTop: 8 }]}>
-            Last week
-          </Text>
-          <Text style={textStyles.rowText}>{stats.lastWeek} g</Text>
-
-          <Text style={[textStyles.pageSubtitle, { marginTop: 8 }]}>
-            {stats.thisWeek - stats.lastWeek >= 0 ? "📈" : "📉"}{" "}
-            {Math.abs(stats.thisWeek - stats.lastWeek)} g
-          </Text>
+            <View style={{ alignItems: "center", flex: 1 }}>
+              <Text style={textStyles.pageSubtitle}>Bones</Text>
+              <Text style={textStyles.rowText}>
+                {selectedWeek === "this"
+                  ? stats.thisWeekBones
+                  : stats.lastWeekBones}
+              </Text>
+            </View>
+          </View>
         </View>
 
         {/* GRAF */}
         <View style={[cardStyles.card, { marginBottom: 20 }]}>
           <Text style={textStyles.sectionTitle}>Weekly Food</Text>
+
+          {/* TOGGLE */}
+          <View style={{ flexDirection: "row", gap: 16, marginTop: 10 }}>
+            <Text
+              onPress={() => setSelectedType("grams")}
+              style={{
+                fontWeight: selectedType === "grams" ? "600" : "400",
+                color: selectedType === "grams" ? colors.button : "#888",
+              }}
+            >
+              Food
+            </Text>
+
+            <Text
+              onPress={() => setSelectedType("treats")}
+              style={{
+                fontWeight: selectedType === "treats" ? "600" : "400",
+                color: selectedType === "treats" ? colors.button : "#888",
+              }}
+            >
+              Treats
+            </Text>
+
+            <Text
+              onPress={() => setSelectedType("bones")}
+              style={{
+                fontWeight: selectedType === "bones" ? "600" : "400",
+                color: selectedType === "bones" ? colors.button : "#888",
+              }}
+            >
+              Bones
+            </Text>
+          </View>
+
           <View style={cardStyles.divider} />
 
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "flex-end",
-              marginTop: 10,
-            }}
-          >
-            {stats.weekData.map((day, index) => {
-              const max = Math.max(...stats.weekData.map((d) => d.grams), 1);
+          {(() => {
+            const max =
+              selectedType === "grams"
+                ? 500 // juster senere
+                : selectedType === "treats"
+                  ? 10
+                  : 5;
 
-              const height = (day.grams / max) * 80;
+            return (
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "flex-end",
+                  marginTop: 10,
+                }}
+              >
+                {weekData.map((day, index) => {
+                  const value =
+                    selectedType === "grams"
+                      ? day.grams
+                      : selectedType === "treats"
+                        ? day.treats
+                        : day.bones;
 
-              return (
-                <View key={index} style={{ alignItems: "center", flex: 1 }}>
-                  <View
-                    style={{
-                      height,
-                      width: 10,
-                      backgroundColor: colors.button,
-                      borderRadius: 4,
-                    }}
-                  />
-                  <Text style={{ fontSize: 10, marginTop: 4 }}>
-                    {day.label}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
+                  const height = (value / max) * 140;
+
+                  return (
+                    <View key={index} style={{ alignItems: "center", flex: 1 }}>
+                      {value > 0 && (
+                        <Text style={{ fontSize: 10, marginBottom: 4 }}>
+                          {value}
+                        </Text>
+                      )}
+                      <View
+                        style={{
+                          height,
+                          width: 10,
+                          backgroundColor:
+                            selectedType === "grams"
+                              ? colors.button
+                              : selectedType === "treats"
+                                ? "#68a81e"
+                                : "#1d6340",
+                          borderRadius: 4,
+                        }}
+                      />
+                      <Text style={{ fontSize: 10, marginTop: 4 }}>
+                        {day.label}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            );
+          })()}
         </View>
       </ScrollView>
     </View>

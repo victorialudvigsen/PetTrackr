@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
 
   headerTitle: {
     flex: 1,
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "700",
     color: colors.button,
     marginLeft: 4,

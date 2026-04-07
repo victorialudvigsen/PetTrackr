@@ -14,7 +14,7 @@ import { textStyles } from "@/styles/textStyles";
 import { FoodEntryData } from "@/types/food";
 import { PetData } from "@/types/pet";
 import { formatFoodSummary } from "@/utils/formatters";
-import { calculateStats } from "@/utils/statsHelpers";
+import { calculateFoodStats } from "@/utils/statsHelpers";
 import { Feather } from "@expo/vector-icons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect } from "@react-navigation/native";
@@ -56,40 +56,10 @@ export default function FoodPage() {
   else if (progress > 0.3) progressColor = "#ffb300";
 
   const [foodStats, setFoodStats] = useState({
-    thisWeek: 0,
-    streak: 0,
+    thisWeekGrams: 0,
+    thisWeekTreats: 0,
+    thisWeekBones: 0,
   });
-
-  /* -------- DELETE FUNCTION -------- */
-  async function handleDelete(entryId: string) {
-    if (!user?.uid || !pet?.id) return;
-
-    Alert.alert("Delete meal", "Are you sure you want to delete this meal?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          await foodApi.deleteFoodEntry(user.uid, pet.id, entryId);
-
-          const updated = await foodApi.getFoodEntries(user.uid, pet.id);
-          setFoodEntries(updated);
-          calculateTodayFood(updated);
-
-          const stats = calculateStats(
-            updated,
-            (e) => (e.type === "meal" ? (e.grams ?? 0) : (e.count ?? 0)),
-            (e) => e.createdAt?.toDate?.() ?? null,
-          );
-
-          setFoodStats({
-            thisWeek: stats.thisWeek,
-            streak: stats.streak,
-          });
-        },
-      },
-    ]);
-  }
 
   /* -------- FETCH PET + FOOD -------- */
   useEffect(() => {
@@ -152,15 +122,12 @@ export default function FoodPage() {
         setFoodEntries(entries);
         calculateTodayFood(entries);
 
-        const stats = calculateStats(
-          entries,
-          (e) => (e.type === "meal" ? (e.grams ?? 0) : (e.count ?? 0)),
-          (e) => e.createdAt?.toDate?.() ?? null,
-        );
+        const stats = calculateFoodStats(entries);
 
         setFoodStats({
-          thisWeek: stats.thisWeek,
-          streak: stats.streak,
+          thisWeekGrams: stats.thisWeekGrams,
+          thisWeekTreats: stats.thisWeekTreats,
+          thisWeekBones: stats.thisWeekBones,
         });
       }
 
@@ -196,6 +163,34 @@ export default function FoodPage() {
     if (isTomorrow) return `Tomorrow • ${time}`;
 
     return `${date.toLocaleDateString()} • ${time}`;
+  }
+
+  /* -------- DELETE FUNCTION -------- */
+  async function handleDelete(entryId: string) {
+    if (!user?.uid || !pet?.id) return;
+
+    Alert.alert("Delete meal", "Are you sure you want to delete this meal?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          await foodApi.deleteFoodEntry(user.uid, pet.id, entryId);
+
+          const updated = await foodApi.getFoodEntries(user.uid, pet.id);
+          setFoodEntries(updated);
+          calculateTodayFood(updated);
+
+          const stats = calculateFoodStats(updated);
+
+          setFoodStats({
+            thisWeekGrams: stats.thisWeekGrams,
+            thisWeekTreats: stats.thisWeekTreats,
+            thisWeekBones: stats.thisWeekBones,
+          });
+        },
+      },
+    ]);
   }
 
   return (
@@ -322,16 +317,20 @@ export default function FoodPage() {
 
           {/* THIS WEEK */}
           <Text style={textStyles.pageSubtitle}>📊 This week</Text>
-          <Text style={textStyles.rowText}>{foodStats.thisWeek} g</Text>
 
-          {/* STREAK */}
+          <Text style={textStyles.rowText}>{foodStats.thisWeekGrams} g</Text>
+
           <Text style={[textStyles.pageSubtitle, { marginTop: 8 }]}>
-            🔥 Streak
+            🍬 Treats
           </Text>
-          <Text style={textStyles.rowText}>
-            {foodStats.streak} day{foodStats.streak !== 1 ? "s" : ""}
-          </Text>
+          <Text style={textStyles.rowText}>{foodStats.thisWeekTreats}</Text>
 
+          <Text style={[textStyles.pageSubtitle, { marginTop: 8 }]}>
+            🦴 Bones
+          </Text>
+          <Text style={textStyles.rowText}>{foodStats.thisWeekBones}</Text>
+
+          {/* CTA */}
           <Pressable
             style={{ marginTop: 10 }}
             onPress={() =>

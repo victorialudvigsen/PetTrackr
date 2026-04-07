@@ -169,8 +169,14 @@ export default function LogFoodPage() {
             const gramsNumber = Number(grams);
             const countNumber = Number(count);
 
-            if (!Number.isFinite(gramsNumber) || gramsNumber <= 0) {
-              return;
+            if (type === "meal") {
+              if (!Number.isFinite(gramsNumber) || gramsNumber <= 0) {
+                return;
+              }
+            } else {
+              if (!Number.isFinite(countNumber) || countNumber <= 0) {
+                return;
+              }
             }
 
             try {
