@@ -41,6 +41,13 @@ export default function MedicPage() {
 
   const [meds, setMeds] = useState<MedicEntryData[]>([]);
   const [isLoadingMeds, setIsLoadingMeds] = useState(true);
+  const [todaySummary, setTodaySummary] = useState({
+    count: 0,
+    nextReminder: null as Date | null,
+  });
+  const [upcomingReminders, setUpcomingReminders] = useState<
+    { name: string; date: Date }[]
+  >([]);
 
   /* -------- HANDLE DELETE -------- */
   async function handleDelete(entry: MedicEntryData) {
@@ -68,6 +75,7 @@ export default function MedicPage() {
             // Oppdaterer liste
             const updated = await medicApi.getMedicEntries(user.uid, pet.id);
             setMeds(updated);
+            calculateTodayMedic(updated);
           },
         },
       ],
@@ -82,6 +90,7 @@ export default function MedicPage() {
       setIsLoading(true);
       const result = await petApi.getPetById(user.uid, id);
       setPet(result);
+
       setIsLoading(false);
     }
 
@@ -97,6 +106,7 @@ export default function MedicPage() {
         setIsLoadingMeds(true);
         const result = await medicApi.getMedicEntries(user.uid, id);
         setMeds(result);
+        calculateTodayMedic(result);
         setIsLoadingMeds(false);
       }
 
@@ -131,6 +141,51 @@ export default function MedicPage() {
     if (isTomorrow) return `Tomorrow • ${time}`;
 
     return `${date.toLocaleDateString()} • ${time}`;
+  }
+
+  /* -------- CALCULATE TODAY MEDIC -------- */
+  function calculateTodayMedic(entries: MedicEntryData[]) {
+    const today = new Date();
+
+    const isSameDay = (d1: Date, d2: Date) =>
+      d1.getDate() === d2.getDate() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getFullYear() === d2.getFullYear();
+
+    // Finner meds lagt til i dag
+    const todayEntries = entries.filter((entry) => {
+      const date = entry.createdAt?.toDate?.();
+      return date && isSameDay(date, today);
+    });
+
+    // Finner neste reminder
+    const now = new Date();
+
+    const upcomingReminders = entries
+      .filter((e) => e.reminderEnabled && e.remindAt)
+      .map((e) => e.remindAt?.toDate?.())
+      .filter((d): d is Date => !!d && d > now)
+      .sort((a, b) => a.getTime() - b.getTime());
+
+    const nextReminder = upcomingReminders[0] ?? null;
+
+    setTodaySummary({
+      count: todayEntries.length,
+      nextReminder,
+    });
+
+    // Upcoming reminders
+    const upcoming = entries
+      .filter((e) => e.reminderEnabled && e.remindAt)
+      .map((e) => ({
+        name: e.name,
+        date: e.remindAt?.toDate?.(),
+      }))
+      .filter((e) => e.date && e.date > now)
+      .sort((a, b) => a.date!.getTime() - b.date!.getTime())
+      .slice(0, 3); // maks 3
+
+    setUpcomingReminders(upcoming as { name: string; date: Date }[]);
   }
 
   return (
@@ -189,6 +244,73 @@ export default function MedicPage() {
           </View>
         </View>
 
+        {/* TODAY */}
+        <View style={cardStyles.card}>
+          <Text style={textStyles.sectionTitle}>Today</Text>
+
+          <View style={cardStyles.divider} />
+
+          {todaySummary.count === 0 && !todaySummary.nextReminder ? (
+            <Text style={textStyles.emptyText}>No medication today</Text>
+          ) : (
+            <>
+              {/* ANTALL */}
+              <Text style={[textStyles.pageSubtitle, { marginTop: 10 }]}>
+                💊 {todaySummary.count} medication
+                {todaySummary.count !== 1 ? "s" : ""}
+              </Text>
+
+              {/* NEXT REMINDER */}
+              {todaySummary.nextReminder && (
+                <Text style={[textStyles.pageSubtitle, { marginTop: 6 }]}>
+                  ⏰ Next:{" "}
+                  {todaySummary.nextReminder.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </Text>
+              )}
+            </>
+          )}
+        </View>
+
+        {/* UPCOMING REMINDERS */}
+        <View style={cardStyles.card}>
+          <Text style={textStyles.sectionTitle}>Upcoming</Text>
+          <View style={cardStyles.divider} />
+
+          {upcomingReminders.length === 0 ? (
+            <Text style={textStyles.emptyText}>No upcoming reminders</Text>
+          ) : (
+            upcomingReminders.map((item, index) => {
+              const now = new Date();
+              const tomorrow = new Date();
+              tomorrow.setDate(now.getDate() + 1);
+
+              const isToday = item.date.toDateString() === now.toDateString();
+              const isTomorrow =
+                item.date.toDateString() === tomorrow.toDateString();
+
+              let label = item.date.toLocaleDateString();
+              if (isToday) label = "Today";
+              else if (isTomorrow) label = "Tomorrow";
+
+              return (
+                <View key={index} style={{ marginTop: 8 }}>
+                  <Text style={textStyles.rowText}>
+                    ⏰ {label} •{" "}
+                    {item.date.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}{" "}
+                    – {item.name}
+                  </Text>
+                </View>
+              );
+            })
+          )}
+        </View>
+
         {/* RECENT MEDICATION */}
         <View style={cardStyles.card}>
           <Text style={textStyles.sectionTitle}>Recent medication</Text>
@@ -204,7 +326,6 @@ export default function MedicPage() {
               const reminderDate = entry.remindAt?.toDate?.();
 
               return (
-                /* SwipeDeleteRow håndterer hele swipe-logikken */
                 <SwipeDeleteRow
                   key={entry.id}
                   onDelete={() => handleDelete(entry)}
@@ -265,6 +386,25 @@ export default function MedicPage() {
               );
             })
           )}
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: "/pets/medic/history/[id]",
+                params: { id },
+              })
+            }
+            style={{ marginTop: 10 }}
+          >
+            <Text
+              style={{
+                color: colors.button,
+                fontWeight: "600",
+                textAlign: "center",
+              }}
+            >
+              See all medication →
+            </Text>
+          </Pressable>
         </View>
 
         <View style={{ height: 18 }} />

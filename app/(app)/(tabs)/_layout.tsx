@@ -137,6 +137,14 @@ export default function TabsLayout() {
             href: null,
           }}
         />
+
+        {/* Skjuler pets/medic/history/[id] fra tab bar */}
+        <Tabs.Screen
+          name="pets/medic/history/[id]"
+          options={{
+            href: null,
+          }}
+        />
       </Tabs>
     </GestureHandlerRootView>
   );
