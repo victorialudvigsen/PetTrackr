@@ -23,7 +23,10 @@ import {
 
 export default function LogMedicPage() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from } = useLocalSearchParams<{
+    id: string;
+    from?: string;
+  }>();
   const { user } = useAuthSession();
 
   const [name, setName] = useState("");
@@ -91,10 +94,14 @@ export default function LogMedicPage() {
     setNote("");
     setReminderEnabled(false);
 
-    router.replace({
-      pathname: "/pets/medic/[id]",
-      params: { id },
-    });
+    if (from === "reminders") {
+      router.replace("/reminders");
+    } else {
+      router.replace({
+        pathname: "/pets/medic/[id]",
+        params: { id },
+      });
+    }
   }
 
   return (
@@ -104,12 +111,16 @@ export default function LogMedicPage() {
     >
       <AppHeader
         title="Log Medication"
-        onBack={() =>
-          router.replace({
-            pathname: "/pets/medic/[id]",
-            params: { id },
-          })
-        }
+        onBack={() => {
+          if (from === "reminders") {
+            router.replace("/reminders");
+          } else {
+            router.replace({
+              pathname: "/pets/medic/[id]",
+              params: { id },
+            });
+          }
+        }}
       />
 
       <ScrollView
