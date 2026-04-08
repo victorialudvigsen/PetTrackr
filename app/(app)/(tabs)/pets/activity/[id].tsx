@@ -300,7 +300,7 @@ export default function PetActivityPage() {
           )}
         </View>
 
-        {/* STATS PREVIEW (FIXET) */}
+        {/* STATS PREVIEW  */}
         <View style={cardStyles.card}>
           <Text style={textStyles.sectionTitle}>Statistics</Text>
           <View style={cardStyles.divider} />

@@ -7,4 +7,6 @@ export interface PetData {
   gender?: string;
   age?: string;
   dailyGoal?: number;
+  treatGoal?: number;
+  boneGoal?: number;
 }

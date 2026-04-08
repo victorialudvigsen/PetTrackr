@@ -45,12 +45,16 @@ export default function FoodPage() {
   const [isLoadingFood, setIsLoadingFood] = useState(true);
 
   const [todaySummary, setTodaySummary] = useState({
-    count: 0,
-    totalGrams: 0,
+    meals: 0,
+    grams: 0,
+    treats: 0,
+    bones: 0,
   });
   const [goal, setGoal] = useState(300);
+  const [treatGoal, setTreatGoal] = useState(10);
+  const [boneGoal, setBoneGoal] = useState(5);
   const [showGoalModal, setShowGoalModal] = useState(false);
-  const progress = Math.min(todaySummary.totalGrams / goal, 1);
+  const progress = Math.min(todaySummary.grams / goal, 1);
   let progressColor = "#ff6b6b";
   if (progress > 0.7) progressColor = colors.button;
   else if (progress > 0.3) progressColor = "#ffb300";
@@ -59,7 +63,18 @@ export default function FoodPage() {
     thisWeekGrams: 0,
     thisWeekTreats: 0,
     thisWeekBones: 0,
+
+    lastWeekGrams: 0,
+    lastWeekTreats: 0,
+    lastWeekBones: 0,
   });
+  const [selectedTodayType, setSelectedTodayType] = useState<
+    "meal" | "treat" | "bone"
+  >("meal");
+  const [selectedStatsWeek, setSelectedStatsWeek] = useState<"this" | "last">(
+    "this",
+  );
+  const [compareMode, setCompareMode] = useState(false);
 
   /* -------- FETCH PET + FOOD -------- */
   useEffect(() => {
@@ -82,6 +97,14 @@ export default function FoodPage() {
       if (petResult?.dailyGoal) {
         setGoal(petResult.dailyGoal);
       }
+
+      if (petResult?.treatGoal) {
+        setTreatGoal(petResult.treatGoal);
+      }
+
+      if (petResult?.boneGoal) {
+        setBoneGoal(petResult.boneGoal);
+      }
     }
 
     fetchData();
@@ -101,14 +124,27 @@ export default function FoodPage() {
       return date && isSameDay(date, today);
     });
 
-    const totalGrams = todayEntries.reduce(
-      (sum: number, e: FoodEntryData) => sum + (e.grams || 0),
-      0,
-    );
+    let meals = 0;
+    let grams = 0;
+    let treats = 0;
+    let bones = 0;
+
+    todayEntries.forEach((e) => {
+      if (e.type === "meal") {
+        meals++;
+        grams += e.grams || 0;
+      } else if (e.type === "treat") {
+        treats += e.count || 0;
+      } else if (e.type === "bone") {
+        bones += e.count || 0;
+      }
+    });
 
     setTodaySummary({
-      count: todayEntries.length,
-      totalGrams,
+      meals,
+      grams,
+      treats,
+      bones,
     });
   }
 
@@ -128,6 +164,10 @@ export default function FoodPage() {
           thisWeekGrams: stats.thisWeekGrams,
           thisWeekTreats: stats.thisWeekTreats,
           thisWeekBones: stats.thisWeekBones,
+
+          lastWeekGrams: stats.lastWeekGrams,
+          lastWeekTreats: stats.lastWeekTreats,
+          lastWeekBones: stats.lastWeekBones,
         });
       }
 
@@ -187,6 +227,10 @@ export default function FoodPage() {
             thisWeekGrams: stats.thisWeekGrams,
             thisWeekTreats: stats.thisWeekTreats,
             thisWeekBones: stats.thisWeekBones,
+
+            lastWeekGrams: stats.lastWeekGrams,
+            lastWeekTreats: stats.lastWeekTreats,
+            lastWeekBones: stats.lastWeekBones,
           });
         },
       },
@@ -255,6 +299,9 @@ export default function FoodPage() {
 
         {/* TODAY */}
         <View style={cardStyles.card}>
+          <Text style={[textStyles.sectionTitle, { marginBottom: 10 }]}>
+            Today
+          </Text>
           {/* HEADER */}
           <View
             style={{
@@ -263,7 +310,38 @@ export default function FoodPage() {
               alignItems: "center",
             }}
           >
-            <Text style={textStyles.sectionTitle}>Today</Text>
+            {/* TOGGLE */}
+            <View style={{ flexDirection: "row", gap: 16 }}>
+              <Text
+                onPress={() => setSelectedTodayType("meal")}
+                style={{
+                  fontWeight: selectedTodayType === "meal" ? "600" : "400",
+                  color: selectedTodayType === "meal" ? colors.button : "#888",
+                }}
+              >
+                Meal
+              </Text>
+
+              <Text
+                onPress={() => setSelectedTodayType("treat")}
+                style={{
+                  fontWeight: selectedTodayType === "treat" ? "600" : "400",
+                  color: selectedTodayType === "treat" ? colors.button : "#888",
+                }}
+              >
+                Treats
+              </Text>
+
+              <Text
+                onPress={() => setSelectedTodayType("bone")}
+                style={{
+                  fontWeight: selectedTodayType === "bone" ? "600" : "400",
+                  color: selectedTodayType === "bone" ? colors.button : "#888",
+                }}
+              >
+                Bones
+              </Text>
+            </View>
 
             <Pressable onPress={() => setShowGoalModal(true)}>
               <Text style={{ color: colors.button, fontWeight: "600" }}>
@@ -274,61 +352,201 @@ export default function FoodPage() {
 
           <View style={cardStyles.divider} />
 
-          {todaySummary.count === 0 ? (
-            <Text style={textStyles.emptyText}>No meals today</Text>
+          {todaySummary.meals === 0 &&
+          todaySummary.treats === 0 &&
+          todaySummary.bones === 0 ? (
+            <Text style={textStyles.emptyText}>No activity today</Text>
           ) : (
             <>
-              {/* PROGRESS BAR */}
-              <View
-                style={{
-                  height: 10,
-                  backgroundColor: "#eee",
-                  borderRadius: 6,
-                  overflow: "hidden",
-                  marginTop: 10,
-                }}
-              >
-                <View
-                  style={{
-                    width: `${progress * 100}%`,
-                    height: "100%",
-                    backgroundColor: progressColor,
-                  }}
-                />
-              </View>
+              {/* PROGRESS LOGIKK */}
+              {(() => {
+                const value =
+                  selectedTodayType === "meal"
+                    ? todaySummary.grams
+                    : selectedTodayType === "treat"
+                      ? todaySummary.treats
+                      : todaySummary.bones;
 
-              {/* STATS */}
-              <Text style={[textStyles.pageSubtitle, { marginTop: 10 }]}>
-                {todaySummary.totalGrams} g / {goal} g
-              </Text>
+                const max =
+                  selectedTodayType === "meal"
+                    ? goal
+                    : selectedTodayType === "treat"
+                      ? treatGoal
+                      : boneGoal;
 
-              <Text style={textStyles.pageSubtitle}>
-                🍽️ {todaySummary.count} meal
-                {todaySummary.count !== 1 ? "s" : ""}
-              </Text>
+                const progress = Math.min(value / max, 1);
+
+                const progressColor =
+                  progress > 0.7
+                    ? colors.button
+                    : progress > 0.3
+                      ? "#ffb300"
+                      : "#ff6b6b";
+
+                return (
+                  <>
+                    {/* PROGRESS BAR */}
+                    <View
+                      style={{
+                        height: 10,
+                        backgroundColor: "#eee",
+                        borderRadius: 6,
+                        overflow: "hidden",
+                        marginTop: 10,
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: `${progress * 100}%`,
+                          height: "100%",
+                          backgroundColor: progressColor,
+                        }}
+                      />
+                    </View>
+
+                    {/* DYNAMISK TEKST */}
+                    <Text style={[textStyles.pageSubtitle, { marginTop: 10 }]}>
+                      {selectedTodayType === "meal"
+                        ? `${todaySummary.grams} g / ${goal} g`
+                        : selectedTodayType === "treat"
+                          ? `${todaySummary.treats} / ${treatGoal} treats`
+                          : `${todaySummary.bones} / ${boneGoal} bones`}
+                    </Text>
+
+                    <Text style={textStyles.pageSubtitle}>
+                      {selectedTodayType === "meal"
+                        ? `🍽️ ${todaySummary.meals} meal${
+                            todaySummary.meals !== 1 ? "s" : ""
+                          }`
+                        : selectedTodayType === "treat"
+                          ? `🍬 ${todaySummary.treats} treat${
+                              todaySummary.treats !== 1 ? "s" : ""
+                            }`
+                          : `🦴 ${todaySummary.bones} bone${
+                              todaySummary.bones !== 1 ? "s" : ""
+                            }`}
+                    </Text>
+                  </>
+                );
+              })()}
             </>
           )}
         </View>
 
-        {/* STATS PREVIEW */}
+        {/* STATISTICS */}
         <View style={cardStyles.card}>
           <Text style={textStyles.sectionTitle}>Statistics</Text>
+
+          {/* TOGGLE + COMPARE */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginTop: 10,
+            }}
+          >
+            {/* LEFT: TOGGLE */}
+            <View style={{ flexDirection: "row", gap: 16 }}>
+              <Text
+                onPress={() => setSelectedStatsWeek("this")}
+                style={{
+                  fontWeight: selectedStatsWeek === "this" ? "600" : "400",
+                  color: selectedStatsWeek === "this" ? colors.button : "#888",
+                }}
+              >
+                This week
+              </Text>
+
+              <Text
+                onPress={() => setSelectedStatsWeek("last")}
+                style={{
+                  fontWeight: selectedStatsWeek === "last" ? "600" : "400",
+                  color: selectedStatsWeek === "last" ? colors.button : "#888",
+                }}
+              >
+                Last week
+              </Text>
+            </View>
+
+            {/* RIGHT: COMPARE BUTTON */}
+            <Text
+              onPress={() => setCompareMode((prev) => !prev)}
+              style={{
+                color: colors.button,
+                fontWeight: "600",
+              }}
+            >
+              {compareMode ? "Close" : "Compare"}
+            </Text>
+          </View>
+
           <View style={cardStyles.divider} />
 
-          {/* THIS WEEK */}
-          <Text style={textStyles.pageSubtitle}>📊 This week</Text>
+          {/* MEALS */}
+          <Text style={[textStyles.pageSubtitle, { marginTop: 8 }]}>
+            🍽️ Meals
+          </Text>
 
-          <Text style={textStyles.rowText}>{foodStats.thisWeekGrams} g</Text>
+          {compareMode ? (
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
+            >
+              <Text style={textStyles.rowText}>
+                {foodStats.thisWeekGrams} g
+              </Text>
+              <Text style={textStyles.rowText}>
+                {foodStats.lastWeekGrams} g
+              </Text>
+            </View>
+          ) : (
+            <Text style={textStyles.rowText}>
+              {selectedStatsWeek === "this"
+                ? foodStats.thisWeekGrams
+                : foodStats.lastWeekGrams}{" "}
+              g
+            </Text>
+          )}
 
+          {/* TREATS */}
           <Text style={[textStyles.pageSubtitle, { marginTop: 8 }]}>
             🍬 Treats
           </Text>
-          <Text style={textStyles.rowText}>{foodStats.thisWeekTreats}</Text>
 
+          {compareMode ? (
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
+            >
+              <Text style={textStyles.rowText}>{foodStats.thisWeekTreats}</Text>
+              <Text style={textStyles.rowText}>{foodStats.lastWeekTreats}</Text>
+            </View>
+          ) : (
+            <Text style={textStyles.rowText}>
+              {selectedStatsWeek === "this"
+                ? foodStats.thisWeekTreats
+                : foodStats.lastWeekTreats}
+            </Text>
+          )}
+
+          {/* BONES */}
           <Text style={[textStyles.pageSubtitle, { marginTop: 8 }]}>
             🦴 Bones
           </Text>
-          <Text style={textStyles.rowText}>{foodStats.thisWeekBones}</Text>
+
+          {compareMode ? (
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
+            >
+              <Text style={textStyles.rowText}>{foodStats.thisWeekBones}</Text>
+              <Text style={textStyles.rowText}>{foodStats.lastWeekBones}</Text>
+            </View>
+          ) : (
+            <Text style={textStyles.rowText}>
+              {selectedStatsWeek === "this"
+                ? foodStats.thisWeekBones
+                : foodStats.lastWeekBones}
+            </Text>
+          )}
 
           {/* CTA */}
           <Pressable
@@ -362,7 +580,7 @@ export default function FoodPage() {
           ) : foodEntries.length === 0 ? (
             <Text style={textStyles.emptyText}>No meals logged yet.</Text>
           ) : (
-            foodEntries.slice(0, 10).map((entry) => (
+            foodEntries.slice(0, 5).map((entry) => (
               <SwipeDeleteRow
                 key={entry.id}
                 onDelete={() => handleDelete(entry.id)}
@@ -392,6 +610,26 @@ export default function FoodPage() {
               </SwipeDeleteRow>
             ))
           )}
+
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: "/pets/food/history/[id]",
+                params: { id },
+              })
+            }
+            style={{ marginTop: 10 }}
+          >
+            <Text
+              style={{
+                color: colors.button,
+                fontWeight: "600",
+                textAlign: "center",
+              }}
+            >
+              See all meals →
+            </Text>
+          </Pressable>
         </View>
 
         <View style={{ height: 18 }} />
@@ -403,8 +641,15 @@ export default function FoodPage() {
           if (!user?.uid || !pet?.id) return;
 
           try {
-            await updatePetGoal(user.uid, pet.id, value);
-            setGoal(value);
+            await updatePetGoal(user.uid, pet.id, value, selectedTodayType);
+
+            if (selectedTodayType === "meal") {
+              setGoal(value);
+            } else if (selectedTodayType === "treat") {
+              setTreatGoal(value);
+            } else {
+              setBoneGoal(value);
+            }
           } catch (e) {
             console.log("Error saving goal:", e);
           }

@@ -195,7 +195,9 @@ export default function FoodStatsPage() {
 
         {/* THIS WEEK */}
         <View style={cardStyles.card}>
-          <Text style={textStyles.sectionTitle}>Weekly stats</Text>
+          <Text style={[textStyles.sectionTitle, { marginBottom: 10 }]}>
+            Weekly stats
+          </Text>
           <View style={{ flexDirection: "row", gap: 16 }}>
             <Text
               onPress={() => setSelectedWeek("this")}

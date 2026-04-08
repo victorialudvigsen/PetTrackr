@@ -115,12 +115,21 @@ export async function updatePetGoal(
   userId: string,
   petId: string,
   goal: number,
+  type?: "meal" | "treat" | "bone",
 ) {
   try {
     const ref = doc(db, "users", userId, "pets", petId);
 
+    let field = "dailyGoal"; // 👈 default (Activity + meals)
+
+    if (type === "treat") {
+      field = "treatGoal";
+    } else if (type === "bone") {
+      field = "boneGoal";
+    }
+
     await updateDoc(ref, {
-      dailyGoal: goal,
+      [field]: goal,
     });
   } catch (e) {
     console.log("Error updating goal:", e);
