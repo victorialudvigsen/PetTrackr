@@ -4,6 +4,7 @@ import AppHeader from "@/components/AppHeader";
 import { useAuthSession } from "@/providers/authctx";
 import { buttonStyles } from "@/styles/buttonStyles";
 import { cardStyles } from "@/styles/cardStyles";
+import { colors } from "@/styles/colors";
 import { inputStyles } from "@/styles/inputStyles";
 import { layoutStyles } from "@/styles/layoutStyles";
 import { textStyles } from "@/styles/textStyles";
@@ -94,6 +95,38 @@ export default function ManageGroupPage() {
               <Text style={textStyles.pageSubtitle}>
                 {members.length} member{members.length !== 1 ? "s" : ""}
               </Text>
+
+              <Pressable
+                style={{ marginTop: 12 }}
+                onPress={async () => {
+                  if (!user?.uid || !groupId) return;
+
+                  try {
+                    const result = await groupApi.copyUserPetsToGroup(
+                      user.uid,
+                      groupId,
+                    );
+
+                    Alert.alert(
+                      "Pets copied",
+                      `${result.copiedPets} pet${result.copiedPets !== 1 ? "s" : ""} copied to the group.`,
+                    );
+                  } catch (e) {
+                    console.log("Could not copy pets to group:", e);
+                    Alert.alert("Error", "Could not copy pets to group.");
+                  }
+                }}
+              >
+                <Text
+                  style={{
+                    color: colors.button,
+                    fontWeight: "600",
+                    textAlign: "center",
+                  }}
+                >
+                  Move my pets to group →
+                </Text>
+              </Pressable>
             </View>
 
             <View style={cardStyles.card}>
@@ -111,7 +144,7 @@ export default function ManageGroupPage() {
           </>
         )}
 
-        <View style={cardStyles.card}>
+        <View style={[cardStyles.card, { marginBottom: 20 }]}>
           <Text style={textStyles.sectionTitle}>Invite member</Text>
           <View style={cardStyles.divider} />
 
@@ -151,7 +184,7 @@ export default function ManageGroupPage() {
                   return;
                 }
 
-                // Oppretter invitasjon, men legger IKKE brukeren til som medlem ennå
+                // Oppretter invitasjon, men legger ikke brukeren til som medlem ennå
                 await groupApi.createGroupInvite(
                   groupId,
                   groupName ?? "Shared Group",

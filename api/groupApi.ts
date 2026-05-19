@@ -10,6 +10,7 @@ import {
   setDoc,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 
 /* 
@@ -217,6 +218,93 @@ export async function declineGroupInvite(inviteId: string) {
     });
   } catch (e) {
     console.log("Error declining group invite:", e);
+    throw e;
+  }
+}
+
+// Kopierer brukerens eksisterende pets og underdata til gruppen
+// Viktig: Dette SLETTER IKKE gammel data fra users/{uid} ennå
+export async function copyUserPetsToGroup(userId: string, groupId: string) {
+  try {
+    const petsSnap = await getDocs(collection(db, "users", userId, "pets"));
+
+    if (petsSnap.empty) {
+      return { copiedPets: 0 };
+    }
+
+    const batch = writeBatch(db);
+
+    for (const petDoc of petsSnap.docs) {
+      const petId = petDoc.id;
+      const petData = petDoc.data();
+
+      // Kopierer selve pet-dokumentet
+      const groupPetRef = doc(db, "groups", groupId, "pets", petId);
+      batch.set(groupPetRef, petData);
+
+      // Kopierer food
+      const foodSnap = await getDocs(
+        collection(db, "users", userId, "pets", petId, "food"),
+      );
+
+      foodSnap.forEach((foodDoc) => {
+        const ref = doc(
+          db,
+          "groups",
+          groupId,
+          "pets",
+          petId,
+          "food",
+          foodDoc.id,
+        );
+
+        batch.set(ref, foodDoc.data());
+      });
+
+      // Kopierer walks
+      const walksSnap = await getDocs(
+        collection(db, "users", userId, "pets", petId, "walks"),
+      );
+
+      walksSnap.forEach((walkDoc) => {
+        const ref = doc(
+          db,
+          "groups",
+          groupId,
+          "pets",
+          petId,
+          "walks",
+          walkDoc.id,
+        );
+
+        batch.set(ref, walkDoc.data());
+      });
+
+      // Kopierer meds
+      const medsSnap = await getDocs(
+        collection(db, "users", userId, "pets", petId, "meds"),
+      );
+
+      medsSnap.forEach((medDoc) => {
+        const ref = doc(
+          db,
+          "groups",
+          groupId,
+          "pets",
+          petId,
+          "meds",
+          medDoc.id,
+        );
+
+        batch.set(ref, medDoc.data());
+      });
+    }
+
+    await batch.commit();
+
+    return { copiedPets: petsSnap.size };
+  } catch (e) {
+    console.log("Error copying pets to group:", e);
     throw e;
   }
 }
