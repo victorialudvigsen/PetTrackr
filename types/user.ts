@@ -4,4 +4,5 @@ export interface UserData {
   bio: string;
   avatarUrl?: string;
   phone?: string;
+  groupId?: string;
 }

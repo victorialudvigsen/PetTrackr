@@ -145,6 +145,22 @@ export default function TabsLayout() {
             href: null,
           }}
         />
+
+        {/* Skjuler create-group fra tab bar */}
+        <Tabs.Screen
+          name="create-group"
+          options={{
+            href: null,
+          }}
+        />
+
+        {/* Skjuler manage-group fra tab bar */}
+        <Tabs.Screen
+          name="manage-group"
+          options={{
+            href: null,
+          }}
+        />
       </Tabs>
     </GestureHandlerRootView>
   );

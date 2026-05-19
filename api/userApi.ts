@@ -1,6 +1,15 @@
 import { db } from "@/firebaseConfig";
 import { UserData } from "@/types/user";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 
 // Oppretter en ny brukerprofil i databasen for gitt userId
 export async function createUserProfile(userId: string, user: UserData) {
@@ -72,5 +81,28 @@ export async function editUserPhone(userId: string, phone: string | null) {
     console.log("Phone updated for user:", userId);
   } catch (e) {
     console.log("Error editing user phone", e);
+  }
+}
+
+// Finner en bruker basert på e-postadresse
+export async function getUserByEmail(email: string) {
+  try {
+    const q = query(collection(db, "users"), where("email", "==", email));
+
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      return null;
+    }
+
+    const userDoc = snap.docs[0];
+
+    return {
+      id: userDoc.id,
+      ...(userDoc.data() as UserData),
+    };
+  } catch (e) {
+    console.log("Error finding user by email", e);
+    return null;
   }
 }

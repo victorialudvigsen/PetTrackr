@@ -1,4 +1,5 @@
 import { signIn, signOut } from "@/api/authApi";
+import { createUserProfile } from "@/api/userApi";
 import { auth } from "@/firebaseConfig";
 import { useRouter } from "expo-router";
 import {
@@ -109,6 +110,13 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
           // Setter navn direkte i Firebase
           await updateProfile(userCredential.user, {
             displayName: displayName,
+          });
+
+          // Lager brukerprofil i Firestore (users/{uid})
+          await createUserProfile(userCredential.user.uid, {
+            name: displayName,
+            email: email,
+            bio: "",
           });
 
           // Setter lokal session med en gang

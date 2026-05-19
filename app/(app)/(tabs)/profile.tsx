@@ -3,23 +3,34 @@ import {
   updateUserEmail,
   updateUserPassword,
 } from "@/api/authApi";
+import * as groupApi from "@/api/groupApi";
 import { uploadProfilePictureToFirebase } from "@/api/imageApi";
+import * as petApi from "@/api/petApi";
 import {
   editUserAvatarUrl,
   editUserPhone,
   getUserProfile,
 } from "@/api/userApi";
+import AppHeader from "@/components/AppHeader";
 import ProfilePicture from "@/components/ProfilePicture";
 import { useAuthSession } from "@/providers/authctx";
+import { cardStyles } from "@/styles/cardStyles";
+import { colors } from "@/styles/colors";
+import { layoutStyles } from "@/styles/layoutStyles";
+import { rowStyles } from "@/styles/rowStyles";
+import { textStyles } from "@/styles/textStyles";
+import { PetData } from "@/types/pet";
 import { pickProfilePicture } from "@/utils/pickProfilePicture";
 import { Feather } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Image,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -27,16 +38,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-
-import * as petApi from "@/api/petApi";
-import AppHeader from "@/components/AppHeader";
-import { cardStyles } from "@/styles/cardStyles";
-import { colors } from "@/styles/colors";
-import { layoutStyles } from "@/styles/layoutStyles";
-import { rowStyles } from "@/styles/rowStyles";
-import { textStyles } from "@/styles/textStyles";
-import { PetData } from "@/types/pet";
-import { useFocusEffect } from "@react-navigation/native";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -71,6 +72,13 @@ export default function ProfilePage() {
   const [pets, setPets] = useState<PetData[]>([]);
   const [isLoadingPets, setIsLoadingPets] = useState(false);
 
+  // Group
+  const [groupId, setGroupId] = useState<string | null>(null);
+  const [groupName, setGroupName] = useState<string | null>(null);
+  const [pendingInvites, setPendingInvites] = useState<any[]>([]);
+  const [showInvitesModal, setShowInvitesModal] = useState(false);
+
+  // Loader pets
   const loadPets = useCallback(async () => {
     if (!user?.uid) return;
 
@@ -86,6 +94,17 @@ export default function ProfilePage() {
 
     const loadProfileImage = async () => {
       const profile = await getUserProfile(user.uid);
+
+      const invites = await groupApi.getPendingInvitesForUser(user.uid);
+      setPendingInvites(invites);
+
+      setGroupId(profile?.groupId ?? null);
+      if (profile?.groupId) {
+        const group = await groupApi.getGroupById(profile.groupId);
+        setGroupName((group?.name as string) ?? null);
+      } else {
+        setGroupName(null);
+      }
 
       if (profile?.avatarUrl) {
         setProfileImageUri(profile.avatarUrl);
@@ -223,7 +242,7 @@ export default function ProfilePage() {
                   setIsSavingUserInfo(true);
 
                   try {
-                    // 1Navn (Firebase Auth)
+                    // Navn (Firebase Auth)
                     const newName = editName.trim();
                     if (newName && newName !== localDisplayName) {
                       await updateUserDisplayName(user, newName);
@@ -392,6 +411,63 @@ export default function ProfilePage() {
           </View>
         </View>
 
+        {/* GROUP CARD */}
+        <View style={cardStyles.card}>
+          <View style={cardStyles.cardHeaderRow}>
+            <Text style={textStyles.sectionTitle}>Shared Group</Text>
+
+            <Pressable onPress={() => setShowInvitesModal(true)}>
+              <Feather
+                name="mail"
+                size={24}
+                color={
+                  pendingInvites.length > 0
+                    ? colors.button
+                    : colors.textSecondary
+                }
+              />
+            </Pressable>
+          </View>
+
+          <View style={cardStyles.divider} />
+
+          <Text style={textStyles.pageSubtitle}>
+            {groupId ? `Group: ${groupName ?? "Loading..."}` : "No group yet"}
+          </Text>
+
+          {groupId ? (
+            <Pressable
+              style={{ marginTop: 12 }}
+              onPress={() => router.push("/manage-group" as any)}
+            >
+              <Text
+                style={{
+                  color: colors.button,
+                  fontWeight: "600",
+                  textAlign: "center",
+                }}
+              >
+                Manage group →
+              </Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              style={{ marginTop: 12 }}
+              onPress={() => router.push("/create-group" as any)}
+            >
+              <Text
+                style={{
+                  color: colors.button,
+                  fontWeight: "600",
+                  textAlign: "center",
+                }}
+              >
+                Create group →
+              </Text>
+            </Pressable>
+          )}
+        </View>
+
         {/* MY PETS CARD */}
         <View style={cardStyles.card}>
           <View style={cardStyles.cardHeaderRow}>
@@ -460,6 +536,119 @@ export default function ProfilePage() {
         {/* Litt luft nederst så det ikke krasjer i tab bar */}
         <View style={{ height: 18 }} />
       </ScrollView>
+      {/* GROUP INVITES MODAL */}
+      <Modal visible={showInvitesModal} transparent animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.4)",
+            justifyContent: "center",
+            padding: 20,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: colors.background,
+              borderRadius: 12,
+              padding: 20,
+            }}
+          >
+            <Text style={textStyles.sectionTitle}>Group Invitations</Text>
+
+            <View style={cardStyles.divider} />
+
+            {pendingInvites.length === 0 ? (
+              <Text style={textStyles.emptyText}>No invitations</Text>
+            ) : (
+              pendingInvites.map((invite) => (
+                <View key={invite.id} style={{ marginBottom: 12 }}>
+                  <Text style={textStyles.rowText}>{invite.groupName}</Text>
+
+                  <Text style={textStyles.pageSubtitle}>
+                    You have been invited to join this group.
+                  </Text>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      marginTop: 10,
+                    }}
+                  >
+                    <Pressable
+                      onPress={async () => {
+                        if (!user?.uid || !user.email) return;
+
+                        try {
+                          await groupApi.acceptGroupInvite(
+                            invite.id,
+                            invite.groupId,
+                            user.uid,
+                            user.email,
+                            userNameSession ?? user.email,
+                          );
+
+                          setGroupId(invite.groupId);
+                          setGroupName(invite.groupName);
+                          setPendingInvites((prev) =>
+                            prev.filter((item) => item.id !== invite.id),
+                          );
+
+                          Alert.alert("Success", "You joined the group.");
+                          setShowInvitesModal(false);
+                        } catch (e) {
+                          console.log("Could not accept invite:", e);
+                          Alert.alert("Error", "Could not accept invite.");
+                        }
+                      }}
+                    >
+                      <Text style={{ color: colors.button, fontWeight: "600" }}>
+                        Accept
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={async () => {
+                        try {
+                          await groupApi.declineGroupInvite(invite.id);
+
+                          setPendingInvites((prev) =>
+                            prev.filter((item) => item.id !== invite.id),
+                          );
+
+                          Alert.alert("Declined", "Invitation declined.");
+                        } catch (e) {
+                          console.log("Could not decline invite:", e);
+                          Alert.alert("Error", "Could not decline invite.");
+                        }
+                      }}
+                    >
+                      <Text style={{ color: "#ff6b6b", fontWeight: "600" }}>
+                        Decline
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ))
+            )}
+
+            <Pressable
+              onPress={() => setShowInvitesModal(false)}
+              style={{ marginTop: 12 }}
+            >
+              <Text
+                style={{
+                  color: colors.button,
+                  fontWeight: "600",
+                  textAlign: "center",
+                }}
+              >
+                Close
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
