@@ -1,3 +1,4 @@
+import { getDataOwner } from "@/api/dataOwnerApi";
 import { db } from "@/firebaseConfig";
 import { PetData } from "@/types/pet";
 import {
@@ -11,10 +12,17 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
-// Lager et nytt dyr for en bruker (users/{uid}/pets)
+// Lager et nytt dyr for bruker eller gruppe
 export async function createPet(userId: string, pet: Omit<PetData, "id">) {
   try {
-    const docRef = await addDoc(collection(db, "users", userId, "pets"), pet);
+    // Finner om data skal lagres i users/{uid} eller groups/{groupId}
+    const dataOwner = await getDataOwner(userId);
+
+    const docRef = await addDoc(
+      collection(db, dataOwner.collectionName, dataOwner.ownerId, "pets"),
+      pet,
+    );
+
     console.log("Pet created with ID:", docRef.id);
     return docRef.id;
   } catch (e) {
@@ -23,10 +31,16 @@ export async function createPet(userId: string, pet: Omit<PetData, "id">) {
   }
 }
 
-// Henter alle pets for en bruker
+// Henter alle pets for en bruker eller gruppe
 export async function getAllPets(userId: string) {
   try {
-    const queryResult = await getDocs(collection(db, "users", userId, "pets"));
+    // Finner om data skal hentes fra users/{uid} eller groups/{groupId}
+    const dataOwner = await getDataOwner(userId);
+
+    const queryResult = await getDocs(
+      collection(db, dataOwner.collectionName, dataOwner.ownerId, "pets"),
+    );
+
     const pets = queryResult.docs.map(
       (d) =>
         ({
@@ -34,6 +48,7 @@ export async function getAllPets(userId: string) {
           id: d.id,
         }) as PetData,
     );
+
     console.log("Successfully fetched pets:", pets);
     return pets;
   } catch (e) {
@@ -42,10 +57,16 @@ export async function getAllPets(userId: string) {
   }
 }
 
-// Henter én pet by id
+// Henter én pet by id fra bruker eller gruppe
 export async function getPetById(userId: string, petId: string) {
   try {
-    const petDoc = await getDoc(doc(db, "users", userId, "pets", petId));
+    // Finner om data skal hentes fra users/{uid} eller groups/{groupId}
+    const dataOwner = await getDataOwner(userId);
+
+    const petDoc = await getDoc(
+      doc(db, dataOwner.collectionName, dataOwner.ownerId, "pets", petId),
+    );
+
     if (!petDoc.exists()) return null;
 
     return {
@@ -58,25 +79,29 @@ export async function getPetById(userId: string, petId: string) {
   }
 }
 
-// Oppdaterer photoUrl etter upload
+// Oppdaterer photoUrl etter upload for bruker eller gruppe
 export async function setPetPhotoUrl(
   userId: string,
   petId: string,
   photoUrl: string,
 ) {
   try {
+    // Finner om data ligger i users/{uid} eller groups/{groupId}
+    const dataOwner = await getDataOwner(userId);
+
     await setDoc(
-      doc(db, "users", userId, "pets", petId),
+      doc(db, dataOwner.collectionName, dataOwner.ownerId, "pets", petId),
       { photoUrl },
       { merge: true },
     );
+
     console.log("Pet photoUrl updated:", petId);
   } catch (e) {
     console.log("Error updating pet photoUrl", e);
   }
 }
 
-// Oppdaterer pet info
+// Oppdaterer pet info for bruker eller gruppe
 export async function updatePetBasicInfo(
   userId: string,
   petId: string,
@@ -89,9 +114,15 @@ export async function updatePetBasicInfo(
   },
 ) {
   try {
-    await setDoc(doc(db, "users", userId, "pets", petId), data, {
-      merge: true,
-    });
+    // Finner om data ligger i users/{uid} eller groups/{groupId}
+    const dataOwner = await getDataOwner(userId);
+
+    await setDoc(
+      doc(db, dataOwner.collectionName, dataOwner.ownerId, "pets", petId),
+      data,
+      { merge: true },
+    );
+
     console.log("Pet basic info updated:", petId);
   } catch (e) {
     console.log("Error updating pet basic info", e);
@@ -99,10 +130,16 @@ export async function updatePetBasicInfo(
   }
 }
 
-// Sletter pet
+// Sletter pet fra bruker eller gruppe
 export async function deletePet(userId: string, petId: string) {
   try {
-    await deleteDoc(doc(db, "users", userId, "pets", petId));
+    // Finner om data ligger i users/{uid} eller groups/{groupId}
+    const dataOwner = await getDataOwner(userId);
+
+    await deleteDoc(
+      doc(db, dataOwner.collectionName, dataOwner.ownerId, "pets", petId),
+    );
+
     console.log("Pet deleted:", petId);
   } catch (e) {
     console.log("Error deleting pet", e);
@@ -110,7 +147,7 @@ export async function deletePet(userId: string, petId: string) {
   }
 }
 
-// Oppdaterer progressbar
+// Oppdaterer progressbar for bruker eller gruppe
 export async function updatePetGoal(
   userId: string,
   petId: string,
@@ -118,9 +155,18 @@ export async function updatePetGoal(
   type?: "meal" | "treat" | "bone",
 ) {
   try {
-    const ref = doc(db, "users", userId, "pets", petId);
+    // Finner om data ligger i users/{uid} eller groups/{groupId}
+    const dataOwner = await getDataOwner(userId);
 
-    let field = "dailyGoal"; // 👈 default (Activity + meals)
+    const ref = doc(
+      db,
+      dataOwner.collectionName,
+      dataOwner.ownerId,
+      "pets",
+      petId,
+    );
+
+    let field = "dailyGoal"; // default: activity + meal
 
     if (type === "treat") {
       field = "treatGoal";

@@ -1,3 +1,4 @@
+import { getDataOwner } from "@/api/dataOwnerApi";
 import { db } from "@/firebaseConfig";
 import { WalkData } from "@/types/walk";
 import {
@@ -11,9 +12,19 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
-// Lager path: users/{uid}/pets/{petId}/walks
-function walkCollection(userId: string, petId: string) {
-  return collection(db, "users", userId, "pets", petId, "walks");
+// Lager path for bruker eller gruppe
+async function walkCollection(userId: string, petId: string) {
+  // Finner om data ligger i users/{uid} eller groups/{groupId}
+  const dataOwner = await getDataOwner(userId);
+
+  return collection(
+    db,
+    dataOwner.collectionName,
+    dataOwner.ownerId,
+    "pets",
+    petId,
+    "walks",
+  );
 }
 
 // 1) Legger til walk (duration + createdAt)
@@ -28,7 +39,7 @@ export async function addWalk(
   },
 ) {
   try {
-    const ref = await addDoc(walkCollection(userId, petId), {
+    const ref = await addDoc(await walkCollection(userId, petId), {
       duration: data.duration,
       note: data.note ?? null,
       type: data.type ?? null,
@@ -49,7 +60,7 @@ export async function getWalks(
 ): Promise<WalkData[]> {
   try {
     const q = query(
-      walkCollection(userId, petId),
+      await walkCollection(userId, petId),
       orderBy("createdAt", "desc"),
     );
 
@@ -68,14 +79,27 @@ export async function getWalks(
   }
 }
 
-// 3) Sletter en walk
+// 3) Sletter en walk fra bruker eller gruppe
 export async function deleteWalk(
   userId: string,
   petId: string,
   walkId: string,
 ) {
   try {
-    await deleteDoc(doc(db, "users", userId, "pets", petId, "walks", walkId));
+    // Finner om data ligger i users/{uid} eller groups/{groupId}
+    const dataOwner = await getDataOwner(userId);
+
+    await deleteDoc(
+      doc(
+        db,
+        dataOwner.collectionName,
+        dataOwner.ownerId,
+        "pets",
+        petId,
+        "walks",
+        walkId,
+      ),
+    );
   } catch (e) {
     console.log("Error deleting walk:", e);
     throw e;

@@ -1,3 +1,4 @@
+import { getDataOwner } from "@/api/dataOwnerApi";
 import { db } from "@/firebaseConfig";
 import { MedicEntryData } from "@/types/medic";
 import {
@@ -11,9 +12,19 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
-// Path: users/{uid}/pets/{petId}/meds
-function medsCollection(userId: string, petId: string) {
-  return collection(db, "users", userId, "pets", petId, "meds");
+// Path for bruker eller gruppe
+async function medsCollection(userId: string, petId: string) {
+  // Finner om data ligger i users/{uid} eller groups/{groupId}
+  const dataOwner = await getDataOwner(userId);
+
+  return collection(
+    db,
+    dataOwner.collectionName,
+    dataOwner.ownerId,
+    "pets",
+    petId,
+    "meds",
+  );
 }
 
 // 1) Legger til medic-entry
@@ -31,7 +42,7 @@ export async function addMedicEntry(
   },
 ) {
   try {
-    const ref = await addDoc(medsCollection(userId, petId), {
+    const ref = await addDoc(await medsCollection(userId, petId), {
       name: data.name,
       dosage: data.dosage,
       note: data.note ?? null,
@@ -55,7 +66,7 @@ export async function addMedicEntry(
 export async function getMedicEntries(userId: string, petId: string) {
   try {
     const q = query(
-      medsCollection(userId, petId),
+      await medsCollection(userId, petId),
       orderBy("createdAt", "desc"),
     );
     const snap = await getDocs(q);
@@ -75,14 +86,27 @@ export async function getMedicEntries(userId: string, petId: string) {
   }
 }
 
-// 3) Sletter en medic-entry
+// 3) Sletter en medic-entry fra bruker eller gruppe
 export async function deleteMedicEntry(
   userId: string,
   petId: string,
   entryId: string,
 ) {
   try {
-    await deleteDoc(doc(db, "users", userId, "pets", petId, "meds", entryId));
+    // Finner om data ligger i users/{uid} eller groups/{groupId}
+    const dataOwner = await getDataOwner(userId);
+
+    await deleteDoc(
+      doc(
+        db,
+        dataOwner.collectionName,
+        dataOwner.ownerId,
+        "pets",
+        petId,
+        "meds",
+        entryId,
+      ),
+    );
   } catch (e) {
     console.log("Error deleting medic entry:", e);
     throw e;

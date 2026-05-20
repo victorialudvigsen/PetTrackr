@@ -89,37 +89,39 @@ export default function ProfilePage() {
   }, [user?.uid]);
 
   // Henter bruker
-  useEffect(() => {
-    if (!user?.uid) return;
+  useFocusEffect(
+    useCallback(() => {
+      async function loadProfile() {
+        if (!user?.uid) return;
 
-    const loadProfileImage = async () => {
-      const profile = await getUserProfile(user.uid);
+        const profile = await getUserProfile(user.uid);
 
-      const invites = await groupApi.getPendingInvitesForUser(user.uid);
-      setPendingInvites(invites);
+        setGroupId(profile?.groupId ?? null);
 
-      setGroupId(profile?.groupId ?? null);
-      if (profile?.groupId) {
-        const group = await groupApi.getGroupById(profile.groupId);
-        setGroupName((group?.name as string) ?? null);
-      } else {
-        setGroupName(null);
+        if (profile?.groupId) {
+          const group = await groupApi.getGroupById(profile.groupId);
+          setGroupName(group?.name ?? null);
+        } else {
+          setGroupName(null);
+        }
+
+        const invites = await groupApi.getPendingInvitesForUser(user.uid);
+        setPendingInvites(invites);
+
+        if (profile?.avatarUrl) {
+          setProfileImageUri(profile.avatarUrl);
+        }
+
+        if (profile?.phone) {
+          setPhone(profile.phone);
+        } else {
+          setPhone(null);
+        }
       }
 
-      if (profile?.avatarUrl) {
-        setProfileImageUri(profile.avatarUrl);
-      }
-
-      // Telefon er valgfri
-      if (profile?.phone) {
-        setPhone(profile.phone);
-      } else {
-        setPhone(null);
-      }
-    };
-
-    loadProfileImage();
-  }, [user?.uid]);
+      loadProfile();
+    }, [user?.uid]),
+  );
 
   useEffect(() => {
     setLocalDisplayName(displayName);

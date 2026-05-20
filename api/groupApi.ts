@@ -2,6 +2,8 @@ import { db } from "@/firebaseConfig";
 import {
   addDoc,
   collection,
+  deleteDoc,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -223,7 +225,7 @@ export async function declineGroupInvite(inviteId: string) {
 }
 
 // Kopierer brukerens eksisterende pets og underdata til gruppen
-// Viktig: Dette SLETTER IKKE gammel data fra users/{uid} ennå
+// Viktig: Dette SLETTER IKKE gammel data fra users/{uid}
 export async function copyUserPetsToGroup(userId: string, groupId: string) {
   try {
     const petsSnap = await getDocs(collection(db, "users", userId, "pets"));
@@ -305,6 +307,152 @@ export async function copyUserPetsToGroup(userId: string, groupId: string) {
     return { copiedPets: petsSnap.size };
   } catch (e) {
     console.log("Error copying pets to group:", e);
+    throw e;
+  }
+}
+
+// Lar en bruker forlate en gruppe
+// Dette sletter bare brukerens medlemskap og groupId på brukeren.
+// Selve gruppen og gruppedata blir værende.
+export async function leaveGroup(groupId: string, userId: string) {
+  try {
+    // Fjerner brukeren fra members-listen i gruppen
+    await deleteDoc(doc(db, "groups", groupId, "members", userId));
+
+    // Fjerner groupId fra brukerprofilen
+    await updateDoc(doc(db, "users", userId), {
+      groupId: deleteField(),
+    });
+  } catch (e) {
+    console.log("Error leaving group:", e);
+    throw e;
+  }
+}
+
+// Fjerner et medlem fra en gruppe
+// Brukes av owner for å fjerne andre medlemmer.
+// Sletter medlemskapet og fjerner groupId fra brukerprofilen.
+export async function removeMemberFromGroup(
+  groupId: string,
+  memberUserId: string,
+) {
+  try {
+    // Fjerner medlemmet fra gruppens members-liste
+    await deleteDoc(doc(db, "groups", groupId, "members", memberUserId));
+
+    // Fjerner groupId fra brukerprofilen
+    await updateDoc(doc(db, "users", memberUserId), {
+      groupId: deleteField(),
+    });
+  } catch (e) {
+    console.log("Error removing member from group:", e);
+    throw e;
+  }
+}
+
+// Kopierer gruppens pets og underdata tilbake til owner sin private brukerdata
+// Brukes før owner sletter en gruppe, slik at owner beholder dataen.
+export async function copyGroupPetsToOwner(groupId: string, ownerId: string) {
+  try {
+    const groupPetsSnap = await getDocs(
+      collection(db, "groups", groupId, "pets"),
+    );
+
+    if (groupPetsSnap.empty) {
+      return { copiedPets: 0 };
+    }
+
+    const batch = writeBatch(db);
+
+    for (const petDoc of groupPetsSnap.docs) {
+      const petId = petDoc.id;
+      const petData = petDoc.data();
+
+      // Kopierer pet-dokumentet tilbake til users/{ownerId}/pets/{petId}
+      const ownerPetRef = doc(db, "users", ownerId, "pets", petId);
+      batch.set(ownerPetRef, petData);
+
+      // Kopierer food
+      const foodSnap = await getDocs(
+        collection(db, "groups", groupId, "pets", petId, "food"),
+      );
+
+      foodSnap.forEach((foodDoc) => {
+        batch.set(
+          doc(db, "users", ownerId, "pets", petId, "food", foodDoc.id),
+          foodDoc.data(),
+        );
+      });
+
+      // Kopierer walks
+      const walksSnap = await getDocs(
+        collection(db, "groups", groupId, "pets", petId, "walks"),
+      );
+
+      walksSnap.forEach((walkDoc) => {
+        batch.set(
+          doc(db, "users", ownerId, "pets", petId, "walks", walkDoc.id),
+          walkDoc.data(),
+        );
+      });
+
+      // Kopierer meds
+      const medsSnap = await getDocs(
+        collection(db, "groups", groupId, "pets", petId, "meds"),
+      );
+
+      medsSnap.forEach((medDoc) => {
+        batch.set(
+          doc(db, "users", ownerId, "pets", petId, "meds", medDoc.id),
+          medDoc.data(),
+        );
+      });
+    }
+
+    await batch.commit();
+
+    return { copiedPets: groupPetsSnap.size };
+  } catch (e) {
+    console.log("Error copying group pets to owner:", e);
+    throw e;
+  }
+}
+
+// Sletter en gruppe.
+// Viktig:
+// - Owner får først gruppedata kopiert tilbake til sin private users/{ownerId}/pets
+// - Alle medlemmer mister groupId
+// - Gruppen slettes til slutt
+export async function deleteGroup(groupId: string, ownerId: string) {
+  try {
+    // 1. Kopierer gruppedata tilbake til owner
+    await copyGroupPetsToOwner(groupId, ownerId);
+
+    // 2. Henter alle medlemmer
+    const membersSnap = await getDocs(
+      collection(db, "groups", groupId, "members"),
+    );
+
+    const batch = writeBatch(db);
+
+    membersSnap.forEach((memberDoc) => {
+      const memberId = memberDoc.id;
+
+      // Fjerner groupId fra hver bruker
+      batch.update(doc(db, "users", memberId), {
+        groupId: deleteField(),
+      });
+
+      // Sletter medlemmet fra gruppen
+      batch.delete(doc(db, "groups", groupId, "members", memberId));
+    });
+
+    // 3. Sletter selve group-dokumentet
+    batch.delete(doc(db, "groups", groupId));
+
+    await batch.commit();
+  } catch (e) {
+    console.log("Error deleting group:", e);
     throw e;
   }
 }

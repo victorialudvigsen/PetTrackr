@@ -32,6 +32,10 @@ export default function ManageGroupPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [groupId, setGroupId] = useState<string | null>(null);
 
+  const [currentUserRole, setCurrentUserRole] = useState<
+    "owner" | "member" | null
+  >(null);
+
   useFocusEffect(
     React.useCallback(() => {
       async function fetchGroup() {
@@ -53,6 +57,11 @@ export default function ManageGroupPage() {
         const group = await groupApi.getGroupById(profile.groupId);
         const groupMembers = await groupApi.getGroupMembers(profile.groupId);
 
+        const currentMember = groupMembers.find(
+          (member) => member.userId === user.uid,
+        );
+
+        setCurrentUserRole(currentMember?.role ?? null);
         setGroupName(group?.name ?? null);
         setMembers(groupMembers);
 
@@ -95,6 +104,95 @@ export default function ManageGroupPage() {
               <Text style={textStyles.pageSubtitle}>
                 {members.length} member{members.length !== 1 ? "s" : ""}
               </Text>
+              {currentUserRole === "member" && (
+                <Pressable
+                  style={{ marginTop: 12 }}
+                  onPress={() => {
+                    if (!user?.uid || !groupId) return;
+
+                    Alert.alert(
+                      "Leave group",
+                      "Are you sure you want to leave this group?",
+                      [
+                        { text: "Cancel", style: "cancel" },
+                        {
+                          text: "Leave",
+                          style: "destructive",
+                          onPress: async () => {
+                            try {
+                              await groupApi.leaveGroup(groupId, user.uid);
+
+                              Alert.alert(
+                                "Left group",
+                                "You have left the group.",
+                              );
+                              router.replace("/profile");
+                            } catch (e) {
+                              console.log("Could not leave group:", e);
+                              Alert.alert("Error", "Could not leave group.");
+                            }
+                          },
+                        },
+                      ],
+                    );
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#ff6b6b",
+                      fontWeight: "600",
+                      textAlign: "center",
+                    }}
+                  >
+                    Leave group
+                  </Text>
+                </Pressable>
+              )}
+
+              {currentUserRole === "owner" && (
+                <Pressable
+                  style={{ marginTop: 12 }}
+                  onPress={() => {
+                    if (!user?.uid || !groupId) return;
+
+                    Alert.alert(
+                      "Delete group",
+                      "Are you sure you want to delete this group? You will keep the group data, but other members will lose access.",
+                      [
+                        { text: "Cancel", style: "cancel" },
+                        {
+                          text: "Delete",
+                          style: "destructive",
+                          onPress: async () => {
+                            try {
+                              await groupApi.deleteGroup(groupId, user.uid);
+
+                              Alert.alert(
+                                "Group deleted",
+                                "The group has been deleted.",
+                              );
+                              router.replace("/profile");
+                            } catch (e) {
+                              console.log("Could not delete group:", e);
+                              Alert.alert("Error", "Could not delete group.");
+                            }
+                          },
+                        },
+                      ],
+                    );
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#ff6b6b",
+                      fontWeight: "700",
+                      textAlign: "center",
+                    }}
+                  >
+                    Delete group
+                  </Text>
+                </Pressable>
+              )}
 
               <Pressable
                 style={{ marginTop: 12 }}
@@ -137,7 +235,74 @@ export default function ManageGroupPage() {
                 <View key={member.id} style={{ marginBottom: 10 }}>
                   <Text style={textStyles.rowText}>{member.name}</Text>
                   <Text style={textStyles.pageSubtitle}>{member.email}</Text>
-                  <Text style={textStyles.dateText}>{member.role}</Text>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text style={textStyles.dateText}>{member.role}</Text>
+
+                    {currentUserRole === "owner" &&
+                      member.userId !== user?.uid && (
+                        <Pressable
+                          onPress={() => {
+                            if (!groupId) return;
+
+                            Alert.alert(
+                              "Remove member",
+                              `Remove ${member.name} from the group?`,
+                              [
+                                { text: "Cancel", style: "cancel" },
+                                {
+                                  text: "Remove",
+                                  style: "destructive",
+                                  onPress: async () => {
+                                    try {
+                                      await groupApi.removeMemberFromGroup(
+                                        groupId,
+                                        member.userId,
+                                      );
+
+                                      const updatedMembers =
+                                        await groupApi.getGroupMembers(groupId);
+
+                                      setMembers(updatedMembers);
+
+                                      Alert.alert(
+                                        "Removed",
+                                        "Member removed from group.",
+                                      );
+                                    } catch (e) {
+                                      console.log(
+                                        "Could not remove member:",
+                                        e,
+                                      );
+                                      Alert.alert(
+                                        "Error",
+                                        "Could not remove member.",
+                                      );
+                                    }
+                                  },
+                                },
+                              ],
+                            );
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: "#ff6b6b",
+                              fontWeight: "600",
+                              fontSize: 11,
+                            }}
+                          >
+                            Remove
+                          </Text>
+                        </Pressable>
+                      )}
+                  </View>
                 </View>
               ))}
             </View>

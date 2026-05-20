@@ -1,3 +1,4 @@
+import { getDataOwner } from "@/api/dataOwnerApi";
 import { db } from "@/firebaseConfig";
 import { FoodEntryData } from "@/types/food";
 import {
@@ -11,9 +12,18 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
-// Lager path: users/{uid}/pets/{petId}/food
-function foodCollection(userId: string, petId: string) {
-  return collection(db, "users", userId, "pets", petId, "food");
+async function foodCollection(userId: string, petId: string) {
+  // Finner om data ligger i users/{uid} eller groups/{groupId}
+  const dataOwner = await getDataOwner(userId);
+
+  return collection(
+    db,
+    dataOwner.collectionName,
+    dataOwner.ownerId,
+    "pets",
+    petId,
+    "food",
+  );
 }
 
 // 1) Legger til food-entry (grams + createdAt)
@@ -28,7 +38,7 @@ export async function addFoodEntry(
   },
 ) {
   try {
-    const ref = await addDoc(foodCollection(userId, petId), {
+    const ref = await addDoc(await foodCollection(userId, petId), {
       type: data.type,
       grams: data.grams ?? null,
       count: data.count ?? null,
@@ -46,7 +56,7 @@ export async function addFoodEntry(
 export async function getFoodEntries(userId: string, petId: string) {
   try {
     const q = query(
-      foodCollection(userId, petId),
+      await foodCollection(userId, petId),
       orderBy("createdAt", "desc"),
     );
     const snap = await getDocs(q);
@@ -66,14 +76,27 @@ export async function getFoodEntries(userId: string, petId: string) {
   }
 }
 
-// 3) Sletter en food-entry
+// 3) Sletter en food-entry fra bruker eller gruppe
 export async function deleteFoodEntry(
   userId: string,
   petId: string,
   entryId: string,
 ) {
   try {
-    await deleteDoc(doc(db, "users", userId, "pets", petId, "food", entryId));
+    // Finner om data ligger i users/{uid} eller groups/{groupId}
+    const dataOwner = await getDataOwner(userId);
+
+    await deleteDoc(
+      doc(
+        db,
+        dataOwner.collectionName,
+        dataOwner.ownerId,
+        "pets",
+        petId,
+        "food",
+        entryId,
+      ),
+    );
   } catch (e) {
     console.log("Error deleting food entry:", e);
     throw e;
