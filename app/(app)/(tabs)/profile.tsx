@@ -581,27 +581,66 @@ export default function ProfilePage() {
                       onPress={async () => {
                         if (!user?.uid || !user.email) return;
 
-                        try {
-                          await groupApi.acceptGroupInvite(
-                            invite.id,
-                            invite.groupId,
-                            user.uid,
-                            user.email,
-                            userNameSession ?? user.email,
-                          );
+                        const userId = user.uid;
+                        const userEmail = user.email;
 
-                          setGroupId(invite.groupId);
-                          setGroupName(invite.groupName);
-                          setPendingInvites((prev) =>
-                            prev.filter((item) => item.id !== invite.id),
-                          );
+                        // Henter private pets før brukeren blir medlem av gruppen
+                        const existingPets = await petApi.getAllPets(user.uid);
 
-                          Alert.alert("Success", "You joined the group.");
-                          setShowInvitesModal(false);
-                        } catch (e) {
-                          console.log("Could not accept invite:", e);
-                          Alert.alert("Error", "Could not accept invite.");
+                        async function acceptInvite(movePetsToGroup: boolean) {
+                          try {
+                            // Godtar invitasjonen og legger brukeren til i gruppen
+                            await groupApi.acceptGroupInvite(
+                              invite.id,
+                              invite.groupId,
+                              userId,
+                              userEmail,
+                              userNameSession ?? userEmail,
+                            );
+
+                            // Hvis brukeren velger det, kopieres private pets/data inn i gruppen
+                            if (movePetsToGroup) {
+                              await groupApi.copyUserPetsToGroup(
+                                userId,
+                                invite.groupId,
+                              );
+                            }
+
+                            setGroupId(invite.groupId);
+                            setGroupName(invite.groupName);
+                            setPendingInvites((prev) =>
+                              prev.filter((item) => item.id !== invite.id),
+                            );
+
+                            Alert.alert("Success", "You joined the group.");
+                            setShowInvitesModal(false);
+                          } catch (e) {
+                            console.log("Could not accept invite:", e);
+                            Alert.alert("Error", "Could not accept invite.");
+                          }
                         }
+
+                        if (existingPets.length > 0) {
+                          Alert.alert(
+                            "Move your pets?",
+                            "You already have pets saved. Do you want to move them into this group?",
+                            [
+                              { text: "Cancel", style: "cancel" },
+                              {
+                                text: "Keep private",
+                                onPress: () => acceptInvite(false),
+                              },
+                              {
+                                text: "Move pets",
+                                onPress: () => acceptInvite(true),
+                              },
+                            ],
+                          );
+
+                          return;
+                        }
+
+                        await acceptInvite(false);
                       }}
                     >
                       <Text style={{ color: colors.button, fontWeight: "600" }}>

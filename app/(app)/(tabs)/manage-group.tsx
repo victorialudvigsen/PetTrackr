@@ -4,7 +4,6 @@ import AppHeader from "@/components/AppHeader";
 import { useAuthSession } from "@/providers/authctx";
 import { buttonStyles } from "@/styles/buttonStyles";
 import { cardStyles } from "@/styles/cardStyles";
-import { colors } from "@/styles/colors";
 import { inputStyles } from "@/styles/inputStyles";
 import { layoutStyles } from "@/styles/layoutStyles";
 import { textStyles } from "@/styles/textStyles";
@@ -31,6 +30,9 @@ export default function ManageGroupPage() {
 
   const [inviteEmail, setInviteEmail] = useState("");
   const [groupId, setGroupId] = useState<string | null>(null);
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
+  const [isLeavingGroup, setIsLeavingGroup] = useState(false);
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
 
   const [currentUserRole, setCurrentUserRole] = useState<
     "owner" | "member" | null
@@ -106,7 +108,8 @@ export default function ManageGroupPage() {
               </Text>
               {currentUserRole === "member" && (
                 <Pressable
-                  style={{ marginTop: 12 }}
+                  style={{ marginTop: 12, opacity: isLeavingGroup ? 0.6 : 1 }}
+                  disabled={isLeavingGroup}
                   onPress={() => {
                     if (!user?.uid || !groupId) return;
 
@@ -119,17 +122,17 @@ export default function ManageGroupPage() {
                           text: "Leave",
                           style: "destructive",
                           onPress: async () => {
+                            setIsLeavingGroup(true);
+
                             try {
                               await groupApi.leaveGroup(groupId, user.uid);
 
-                              Alert.alert(
-                                "Left group",
-                                "You have left the group.",
-                              );
                               router.replace("/profile");
                             } catch (e) {
                               console.log("Could not leave group:", e);
                               Alert.alert("Error", "Could not leave group.");
+                            } finally {
+                              setIsLeavingGroup(false);
                             }
                           },
                         },
@@ -137,15 +140,36 @@ export default function ManageGroupPage() {
                     );
                   }}
                 >
-                  <Text
-                    style={{
-                      color: "#ff6b6b",
-                      fontWeight: "600",
-                      textAlign: "center",
-                    }}
-                  >
-                    Leave group
-                  </Text>
+                  {isLeavingGroup ? (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "center",
+                        gap: 8,
+                      }}
+                    >
+                      <ActivityIndicator size="small" />
+                      <Text
+                        style={{
+                          color: "#ff6b6b",
+                          fontWeight: "600",
+                          textAlign: "center",
+                        }}
+                      >
+                        Leaving...
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text
+                      style={{
+                        color: "#ff6b6b",
+                        fontWeight: "600",
+                        textAlign: "center",
+                      }}
+                    >
+                      Leave group
+                    </Text>
+                  )}
                 </Pressable>
               )}
 
@@ -193,38 +217,6 @@ export default function ManageGroupPage() {
                   </Text>
                 </Pressable>
               )}
-
-              <Pressable
-                style={{ marginTop: 12 }}
-                onPress={async () => {
-                  if (!user?.uid || !groupId) return;
-
-                  try {
-                    const result = await groupApi.copyUserPetsToGroup(
-                      user.uid,
-                      groupId,
-                    );
-
-                    Alert.alert(
-                      "Pets copied",
-                      `${result.copiedPets} pet${result.copiedPets !== 1 ? "s" : ""} copied to the group.`,
-                    );
-                  } catch (e) {
-                    console.log("Could not copy pets to group:", e);
-                    Alert.alert("Error", "Could not copy pets to group.");
-                  }
-                }}
-              >
-                <Text
-                  style={{
-                    color: colors.button,
-                    fontWeight: "600",
-                    textAlign: "center",
-                  }}
-                >
-                  Move my pets to group →
-                </Text>
-              </Pressable>
             </View>
 
             <View style={cardStyles.card}>
@@ -248,6 +240,11 @@ export default function ManageGroupPage() {
                     {currentUserRole === "owner" &&
                       member.userId !== user?.uid && (
                         <Pressable
+                          disabled={removingMemberId === member.userId}
+                          style={{
+                            opacity:
+                              removingMemberId === member.userId ? 0.6 : 1,
+                          }}
                           onPress={() => {
                             if (!groupId) return;
 
@@ -260,6 +257,8 @@ export default function ManageGroupPage() {
                                   text: "Remove",
                                   style: "destructive",
                                   onPress: async () => {
+                                    setRemovingMemberId(member.userId);
+
                                     try {
                                       await groupApi.removeMemberFromGroup(
                                         groupId,
@@ -268,22 +267,19 @@ export default function ManageGroupPage() {
 
                                       const updatedMembers =
                                         await groupApi.getGroupMembers(groupId);
-
                                       setMembers(updatedMembers);
-
-                                      Alert.alert(
-                                        "Removed",
-                                        "Member removed from group.",
-                                      );
                                     } catch (e) {
                                       console.log(
                                         "Could not remove member:",
                                         e,
                                       );
+
                                       Alert.alert(
                                         "Error",
                                         "Could not remove member.",
                                       );
+                                    } finally {
+                                      setRemovingMemberId(null);
                                     }
                                   },
                                 },
@@ -298,7 +294,9 @@ export default function ManageGroupPage() {
                               fontSize: 11,
                             }}
                           >
-                            Remove
+                            {removingMemberId === member.userId
+                              ? "Removing..."
+                              : "Remove"}
                           </Text>
                         </Pressable>
                       )}
@@ -324,10 +322,15 @@ export default function ManageGroupPage() {
             placeholder="Email address"
             keyboardType="email-address"
             autoCapitalize="none"
+            editable={!isSendingInvite}
           />
 
           <Pressable
-            style={buttonStyles.saveButton}
+            style={[
+              buttonStyles.saveButton,
+              { opacity: isSendingInvite ? 0.6 : 1 },
+            ]}
+            disabled={isSendingInvite}
             onPress={async () => {
               if (!groupId || !user?.uid) return;
 
@@ -337,7 +340,7 @@ export default function ManageGroupPage() {
                 Alert.alert("Missing email", "Please enter an email address.");
                 return;
               }
-
+              setIsSendingInvite(true);
               try {
                 const foundUser = await getUserByEmail(email);
 
@@ -358,19 +361,25 @@ export default function ManageGroupPage() {
                   user.uid,
                 );
 
-                Alert.alert(
-                  "Invite sent",
-                  "The user can now accept the group invite.",
-                );
-
                 setInviteEmail("");
               } catch (e) {
                 console.log("Could not send invite:", e);
                 Alert.alert("Error", "Could not send invite.");
+              } finally {
+                setIsSendingInvite(false);
               }
             }}
           >
-            <Text style={buttonStyles.saveButtonText}>Send Invite</Text>
+            {isSendingInvite ? (
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+              >
+                <ActivityIndicator size="small" color="#fff" />
+                <Text style={buttonStyles.saveButtonText}>Sending...</Text>
+              </View>
+            ) : (
+              <Text style={buttonStyles.saveButtonText}>Send Invite</Text>
+            )}
           </Pressable>
         </View>
       </ScrollView>
