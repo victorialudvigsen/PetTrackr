@@ -14,7 +14,10 @@ import {
 // Oppretter en ny brukerprofil i databasen for gitt userId
 export async function createUserProfile(userId: string, user: UserData) {
   try {
-    await setDoc(doc(db, "users", userId), user);
+    await setDoc(doc(db, "users", userId), {
+      ...user,
+      emailLower: user.email.trim().toLowerCase(),
+    });
     console.log("Document written with ID: ", userId);
   } catch (e) {
     console.log("Error creating user profile", e);
@@ -87,7 +90,10 @@ export async function editUserPhone(userId: string, phone: string | null) {
 // Finner en bruker basert på e-postadresse
 export async function getUserByEmail(email: string) {
   try {
-    const q = query(collection(db, "users"), where("email", "==", email));
+    const q = query(
+      collection(db, "users"),
+      where("emailLower", "==", email.trim().toLowerCase()),
+    );
 
     const snap = await getDocs(q);
 
