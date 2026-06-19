@@ -33,6 +33,7 @@ export default function ManageGroupPage() {
   const [isSendingInvite, setIsSendingInvite] = useState(false);
   const [isLeavingGroup, setIsLeavingGroup] = useState(false);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+  const [isDeletingGroup, setIsDeletingGroup] = useState(false);
 
   const [currentUserRole, setCurrentUserRole] = useState<
     "owner" | "member" | null
@@ -175,7 +176,11 @@ export default function ManageGroupPage() {
 
               {currentUserRole === "owner" && (
                 <Pressable
-                  style={{ marginTop: 12 }}
+                  style={{
+                    marginTop: 12,
+                    opacity: isDeletingGroup ? 0.6 : 1,
+                  }}
+                  disabled={isDeletingGroup}
                   onPress={() => {
                     if (!user?.uid || !groupId) return;
 
@@ -188,17 +193,17 @@ export default function ManageGroupPage() {
                           text: "Delete",
                           style: "destructive",
                           onPress: async () => {
+                            setIsDeletingGroup(true);
+
                             try {
                               await groupApi.deleteGroup(groupId, user.uid);
 
-                              Alert.alert(
-                                "Group deleted",
-                                "The group has been deleted.",
-                              );
                               router.replace("/profile");
                             } catch (e) {
                               console.log("Could not delete group:", e);
                               Alert.alert("Error", "Could not delete group.");
+                            } finally {
+                              setIsDeletingGroup(false);
                             }
                           },
                         },
@@ -206,15 +211,38 @@ export default function ManageGroupPage() {
                     );
                   }}
                 >
-                  <Text
-                    style={{
-                      color: "#ff6b6b",
-                      fontWeight: "700",
-                      textAlign: "center",
-                    }}
-                  >
-                    Delete group
-                  </Text>
+                  {isDeletingGroup ? (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      <ActivityIndicator size="small" />
+
+                      <Text
+                        style={{
+                          color: "#ff6b6b",
+                          fontWeight: "700",
+                          textAlign: "center",
+                        }}
+                      >
+                        Deleting...
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text
+                      style={{
+                        color: "#ff6b6b",
+                        fontWeight: "700",
+                        textAlign: "center",
+                      }}
+                    >
+                      Delete group
+                    </Text>
+                  )}
                 </Pressable>
               )}
             </View>

@@ -78,6 +78,14 @@ export default function ProfilePage() {
   const [pendingInvites, setPendingInvites] = useState<any[]>([]);
   const [showInvitesModal, setShowInvitesModal] = useState(false);
 
+  // Loading
+  const [acceptingInviteId, setAcceptingInviteId] = useState<string | null>(
+    null,
+  );
+  const [decliningInviteId, setDecliningInviteId] = useState<string | null>(
+    null,
+  );
+
   // Loader pets
   const loadPets = useCallback(async () => {
     if (!user?.uid) return;
@@ -578,6 +586,10 @@ export default function ProfilePage() {
                     }}
                   >
                     <Pressable
+                      disabled={acceptingInviteId === invite.id}
+                      style={{
+                        opacity: acceptingInviteId === invite.id ? 0.6 : 1,
+                      }}
                       onPress={async () => {
                         if (!user?.uid || !user.email) return;
 
@@ -588,6 +600,8 @@ export default function ProfilePage() {
                         const existingPets = await petApi.getAllPets(user.uid);
 
                         async function acceptInvite(movePetsToGroup: boolean) {
+                          setAcceptingInviteId(invite.id);
+
                           try {
                             // Godtar invitasjonen og legger brukeren til i gruppen
                             await groupApi.acceptGroupInvite(
@@ -617,6 +631,8 @@ export default function ProfilePage() {
                           } catch (e) {
                             console.log("Could not accept invite:", e);
                             Alert.alert("Error", "Could not accept invite.");
+                          } finally {
+                            setAcceptingInviteId(null);
                           }
                         }
 
@@ -644,12 +660,20 @@ export default function ProfilePage() {
                       }}
                     >
                       <Text style={{ color: colors.button, fontWeight: "600" }}>
-                        Accept
+                        {acceptingInviteId === invite.id
+                          ? "Joining..."
+                          : "Accept"}
                       </Text>
                     </Pressable>
 
                     <Pressable
+                      disabled={decliningInviteId === invite.id}
+                      style={{
+                        opacity: decliningInviteId === invite.id ? 0.6 : 1,
+                      }}
                       onPress={async () => {
+                        setDecliningInviteId(invite.id);
+
                         try {
                           await groupApi.declineGroupInvite(invite.id);
 
@@ -661,11 +685,15 @@ export default function ProfilePage() {
                         } catch (e) {
                           console.log("Could not decline invite:", e);
                           Alert.alert("Error", "Could not decline invite.");
+                        } finally {
+                          setDecliningInviteId(null);
                         }
                       }}
                     >
                       <Text style={{ color: "#ff6b6b", fontWeight: "600" }}>
-                        Decline
+                        {decliningInviteId === invite.id
+                          ? "Declining..."
+                          : "Decline"}
                       </Text>
                     </Pressable>
                   </View>
